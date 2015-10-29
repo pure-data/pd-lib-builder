@@ -679,7 +679,8 @@ MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 .PHONY: all build-classes build-lib $(classes) $(makefiledirs) $(makefiles)\
         install install-executables install-datafiles install-datadirs \
-        force clean vars allvars depend help
+        force clean vars allvars depend help \
+        pre post
 
 
 ################################################################################
@@ -689,8 +690,10 @@ MAKEFLAGS += --no-builtin-rules
 
 # target all builds class executables plus optional shared lib
 # or alternatively a single lib executable when make-lib-executable=true
-all: $(executables)
+all: pre $(executables) post
 	$(info ++++ info: $(if $(executables),executables in $(lib.name) completed))
+
+pre post:
 
 # build all with -g option turned on for debug symbols
 alldebug: c.flags += -g
