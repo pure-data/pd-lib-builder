@@ -590,7 +590,7 @@ endif
 CFLAGS = $(warn.flags) $(optimization.flags)
 
 # preprocessor flags
-cpp.flags += -DPD -I "$(pdincludepath)"
+cpp.flags += -DPD -I "$(pdincludepath)" -DVERSION='"$(lib.version)"'
 
 # flags for C compiler / linker
 c.flags := $(cpp.flags) $(c.flags) $(cflags) $(CFLAGS)
