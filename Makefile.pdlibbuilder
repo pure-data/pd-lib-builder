@@ -81,6 +81,8 @@
 # - INSTALL_PROGRAM
 # - INSTALL_DATA
 # - INSTALL_DIR
+# - machine
+# - uname
 #
 # Variables available for your makefile or as command argument:
 #
@@ -396,7 +398,9 @@ endif
 # Set architecture-dependent flags, mainly for Linux. For Mac and Windows, 
 # arch.flags are overriden below.
 
-machine := $(shell uname -m)
+ifneq ($(strip $(machine)),)
+  machine := $(shell uname -m)
+endif
 
 # Raspberry Pi 1st generation
 ifeq ($(machine), armv6l)
@@ -424,8 +428,9 @@ endif
 
 # The following systems are defined: Linux, Darwin, Windows. GNU and
 # GNU/kFreeBSD are treated as Linux to get the same options. 
-
-uname := $(shell uname)
+ifneq ($(strip $(uname)),)
+  uname := $(shell uname)
+endif
 
 ifeq ($(findstring $(uname), Linux GNU GNU/kFreeBSD), $(uname))
   system = Linux
