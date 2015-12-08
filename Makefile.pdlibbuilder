@@ -88,6 +88,12 @@
 # - make-lib-executable
 # - suppress-wunused
 #
+# OS specific variables
+# - <os>.cflags
+# - <os>.ldflags
+# - <os>.ldlibs
+#   where <os> is one of linux, darwin, windows 
+#
 #
 #=== descriptions of Makefile.pdlibbuilder API variables =======================
 #
@@ -436,14 +442,23 @@ uname := $(shell uname)
 
 ifeq ($(findstring $(uname), Linux GNU GNU/kFreeBSD), $(uname))
   system = Linux
+  cflags += $(linux.cflags)
+  ldflags += $(linux.ldflags)
+  ldlibs += $(linux.ldlibs)
 endif
 
 ifeq ($(uname), Darwin)
   system = Darwin
+  cflags += $(darwin.cflags)
+  ldflags += $(darwin.ldflags)
+  ldlibs += $(darwin.ldlibs)
 endif
 
 ifeq ($(findstring MINGW, $(uname)), MINGW)
   system = Windows
+  cflags += $(windows.cflags)
+  ldflags += $(windows.ldflags)
+  ldlibs += $(windows.ldlibs)
 endif
 
 # TODO: Cygwin, Android
