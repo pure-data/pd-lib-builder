@@ -607,6 +607,22 @@ installpath := $(DESTDIR)$(objectsdir)/$(lib.name)
 # if so, store the path so we can later do checks with it
 pdincludepathwithspaces := $(if $(word 2, $(pdincludepath)), $(pdincludepath))
 
+# file for creating deken package
+ifeq ($(findstring $(machine), x86_64 ia64), $(machine))
+  deken.bits = 64
+else
+  deken.bits = 32
+endif
+ifeq ($(system), Windows)
+  deken.ext = zip
+  deken.pack = zip -9 -r
+else
+  deken.ext = tar.gz
+  deken.pack = tar -zcvf
+endif
+deken.file = $(lib.name)-v$(lib.version)-($(system)-$(machine)-$(deken.bits))-externals
+deken.tmp = deken-tmp
+deken.folder = $(lib.name)
 
 #=== accumulated build flags ===================================================
 
@@ -1044,6 +1060,17 @@ $(ORIGDIR):
 
 $(DISTDIR):
 
+deken:
+	mkdir -p "$(deken.tmp)"
+	mkdir "$(deken.tmp)/$(deken.folder)"
+	cp $(executables) "$(deken.tmp)/$(deken.folder)/"
+	cp $(datafiles) "$(deken.tmp)/$(deken.folder)/"
+	$(foreach v, $(datadirs), mkdir "$(deken.tmp)/$(deken.folder)/$v";)
+	$(foreach v, $(datadirs), cp -r $v "$(deken.tmp)/$(deken.folder)/";)
+	cd "$(deken.tmp)"; \
+	  $(deken.pack) "$(deken.file).$(deken.ext)" "$(deken.folder)"; \
+	  rm -rf "$(deken.folder)"; \
+	  mv "$(deken.file).$(deken.ext)" ..
 
 ################################################################################
 ### rules: clean targets #######################################################
