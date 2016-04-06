@@ -986,7 +986,7 @@ endef
 
 # Install targets depend on successful exit status of target all because nothing
 # must be installed in case of a build error.
-
+# TODO: target install should provide pristine install directory before installing!
 
 # -p = preserve time stamps
 # -m = set permission mode (as in chmod)
@@ -1032,13 +1032,115 @@ install-datadirs: all
 ################################################################################
 
 
-# TODO
-# These targets are implemented in Makefile Template, but I have to figure out
-# how to do it under the not-so-strict conditions of Makefile.pdlibbuilder.
+# Experimental support of distribution targets, notably deken.
+
+# TODO:
+# - methods to safely remove distribution products 
+# - comprehensible message if absolute path $(tmpdir) contains spaces
+# - source root dir renaming on Windows, see below
+# - support multi-lib packaging in umbrella projects
+# - refine architecture definitions for deken
+
+# Warning: distribution section is incomplete and immature. Don't use for
+# regular projects yet, only for testing.
+
+
+#=== generic variables and targets for packaging ===============================
+
+
+# We try to reflect lib version in the package name and in the root dir name of
+# a source package. Renaming path components while packing is only possible
+# with tar, not zip. Currently on Windows the package root dir name can be
+# anything (though possibly it is $(lib.name) in most cases). TODO: this should
+# be fixed some day since it is relevant for build automation.
+
+ifdef lib.version
+  dist.name := $(lib.name)-v$(lib.version)
+else
+  dist.name := $(lib.name)
+endif
+
+# just in case source directory name != library name
+sourcedir.name := $(notdir $(CURDIR))
+
+# temporary install directory outside source directory
+# absolute path supports recursive make
+tmpdir := $(abspath ../$(lib.name)-build-tmp)
+
+ifeq ($(system), Windows)
+  pack.extension = zip
+  pack.tool = zip
+  pack.options = -9 -r
+  zip.exclude =  -x "*/\.*"
+else
+  pack.extension = tar.gz
+  pack.tool = tar
+  pack.options = -zcvf
+  tar.exclude = --exclude=".*"
+  tar.transform = --transform 's/$(sourcedir.name)/$(dist.name)/' \
+    --show-transformed-names
+endif
+
+# default source package name, overriden by target deken-source
+sourcepack = $(dist.name).$(pack.extension)
+
+# this expands to a source packaging command using tar or zip
+define pack-source
+$(pack.tool) $(tar.transform) $(pack.options) \
+"$(sourcepack)" $(tar.exclude) $(sourcedir.name) $(zip.exclude)
+endef
 
 # make source package
 dist:
-	@echo "target dist not yet implemented"
+	$(MAKE) clean && cd .. && $(call pack-source)
+	@echo "++++ info: sources of lib $(lib.name) packed into ../$(sourcepack)"
+
+# install binary distribution in temporary directory
+dist-install:
+	$(MAKE) install objectsdir=$(tmpdir)
+
+
+#=== deken compliant packages ==================================================
+
+
+# compose architecture string for deken package
+# TODO: fat binaries
+# TODO: how to detect ARM 64 bit?
+ifeq ($(findstring $(machine), x86_64 ia64), $(machine))
+  deken.arch := ($(system)-$(machine)-64)
+else
+  deken.arch := ($(system)-$(machine)-32)
+endif
+
+deken.fullpack := \
+  $(dist.name)-$(deken.arch)(Sources)-externals.$(pack.extension)
+
+deken.sourcepack := \
+  $(dist.name)-(Sources)-externals.$(pack.extension)
+
+deken.binpack := \
+  $(dist.name)-$(deken.arch)-externals.$(pack.extension)
+
+# make deken binary distribution with embedded source package
+deken: dist-install
+	$(MAKE) deken-source && \
+	cd .. && mv "$(deken.sourcepack)" "$(tmpdir)/$(lib.name)" && \
+	cd "$(tmpdir)" && \
+	$(pack.tool) $(pack.options) "$(deken.fullpack)" $(lib.name) && \
+	mv "$(deken.fullpack)" ..
+	@echo "++++ info: lib $(lib.name) packed into ../$(deken.fullpack)"
+
+deken-source: sourcepack = $(deken.sourcepack)
+deken-source: dist
+
+deken-binary-only: dist-install
+	cd "$(tmpdir)" && \
+	$(pack.tool) $(pack.options) "$(deken.binpack)" $(lib.name) && \
+	mv "$(deken.binpack)" ..
+	@echo "++++ info: lib $(lib.name) packed into ../$(deken.fullpack)"
+
+#===============================================================================
+
 
 # make Debian source package
 dpkg-source:
@@ -1082,8 +1184,7 @@ endif
 
 # These targets will trigger sub-make processes for entries in 'makefiledirs'
 # and 'makefiles'.
-all alldebug install clean distclean dist dkpg-source: \
-        $(makefiledirs) $(makefiles)
+all alldebug install clean: $(makefiledirs) $(makefiles)
 
 # this expands to identical rules for each entry in 'makefiledirs'
 $(makefiledirs):
