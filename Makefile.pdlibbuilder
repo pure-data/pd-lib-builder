@@ -1112,6 +1112,11 @@ else
   deken.arch := ($(system)-$(machine)-32)
 endif
 
+# if no source files found, assume architecture-independent distribution
+ifeq ($(filter %.c %.cpp %.cc, $(shell ls -R ./)),)
+ deken.arch :=
+endif
+
 deken.fullpack := \
   $(dist.name)-$(deken.arch)(Sources)-externals.$(pack.extension)
 
