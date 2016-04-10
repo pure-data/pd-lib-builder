@@ -1044,9 +1044,8 @@ install-datadirs: all
 # TODO:
 # - methods to safely remove distribution products 
 # - comprehensible message if absolute path $(tmpdir) contains spaces
-# - source root dir renaming on Windows, see below
+# - source root dir renaming, see below
 # - support multi-lib packaging in umbrella projects
-# - refine architecture definitions for deken
 
 # Warning: distribution section is incomplete and immature. Don't use for
 # regular projects yet, only for testing.
@@ -1057,9 +1056,9 @@ install-datadirs: all
 
 # We try to reflect lib version in the package name and in the root dir name of
 # a source package. Renaming path components while packing is only possible
-# with tar, not zip. Currently on Windows the package root dir name can be
-# anything (though possibly it is $(lib.name) in most cases). TODO: this should
-# be fixed some day since it is relevant for build automation.
+# with tar on Linux, not on OSX and not with zip. So we need a workaround that
+# works for all platforms. TODO: this should be fixed some day since it is
+# relevant for build automation.
 
 ifdef lib.version
   dist.name := $(lib.name)-v$(lib.version)
@@ -1093,7 +1092,7 @@ sourcepack = $(dist.name).$(pack.extension)
 
 # this expands to a source packaging command using tar or zip
 define pack-source
-$(pack.tool) $(tar.transform) $(pack.options) \
+$(pack.tool) $(pack.options) \
 "$(sourcepack)" $(tar.exclude) $(sourcedir.name) $(zip.exclude)
 endef
 
