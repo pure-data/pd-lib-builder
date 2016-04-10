@@ -428,24 +428,25 @@ endif
 # arch.c.flags are overriden below.
 
 machine := $(shell uname -m)
+target.machine := $(machine)
 
 # Raspberry Pi 1st generation
-ifeq ($(machine), armv6l)
+ifeq ($(target.machine), armv6l)
   arch.c.flags = -march=armv6 -mfpu=vfp -mfloat-abi=hard
 endif
 
 # Beagle, Udoo, RPi2 etc.
-ifeq ($(machine), armv7l)
+ifeq ($(target.machine), armv7l)
   arch.c.flags = -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard
 endif
 
 # Intel 32 bit, build with SSE and SSE2 instructions
-ifeq ($(findstring $(machine), i386 i686), $(machine))
+ifeq ($(findstring $(target.machine), i386 i686), $(target.machine))
   arch.c.flags = -march=pentium4 -mfpmath=sse -msse -msse2
 endif
 
 # Intel/AMD 64 bit, build with SSE, SSE2 and SSE3 instructions
-ifeq ($(findstring $(machine), ia64 x86_64), $(machine))
+ifeq ($(findstring $(target.machine), ia64 x86_64), $(target.machine))
   arch.c.flags = -march=core2 -mfpmath=sse -msse -msse2 -msse3 
 endif
 
@@ -531,13 +532,19 @@ ifeq ($(system), Darwin)
   stripflags = -x
   ifeq ($(machine), i386)
     cxx.flags := -fcheck-new
-    arch.c.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=10.4
-    arch.ld.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=10.4
+    target.machine := ppc i386 x86_64
   endif
   ifeq ($(machine), x86_64)
-    arch.c.flags := -arch i386 -arch x86_64 -mmacosx-version-min=10.5
-    arch.ld.flags := -arch i386 -arch x86_64 -mmacosx-version-min=10.5
+    target.machine := i386 x86_64
   endif
+  ifeq ($(findstring i386, $(target.machine)), i386)
+    osxversion := -mmacosx-version-min=10.5
+  endif
+  ifeq ($(findstring ppc, $(target.machine)), ppc)
+    osxversion := -mmacosx-version-min=10.4
+  endif
+  arch.c.flags := $(addprefix -arch , $(target.machine)) $(osxversion)
+  arch.ld.flags := $(arch.c.flags)
 endif
 
 
@@ -1103,14 +1110,21 @@ dist-install:
 #=== deken compliant packages ==================================================
 
 
-# compose architecture string for deken package
-# TODO: fat binaries
 # TODO: how to detect ARM 64 bit?
 ifeq ($(findstring $(machine), x86_64 ia64), $(machine))
-  deken.arch := ($(system)-$(machine)-64)
+  bitness := 64
 else
-  deken.arch := ($(system)-$(machine)-32)
+  bitness := 32
 endif
+
+space :=
+space +=
+
+# compose architecture string for deken package
+# support multi-arch definition for OSX fat binaries
+deken.arch = ($(system)-$v-$(bitness))
+deken.archs := $(subst $(space),,$(foreach v,$(target.machine), \
+               $(call deken.arch, $($v))))
 
 # if no source files found, assume architecture-independent distribution
 ifeq ($(filter %.c %.cpp %.cc, $(shell ls -R ./)),)
@@ -1118,13 +1132,13 @@ ifeq ($(filter %.c %.cpp %.cc, $(shell ls -R ./)),)
 endif
 
 deken.fullpack := \
-  $(dist.name)-$(deken.arch)(Sources)-externals.$(pack.extension)
+  $(dist.name)-$(deken.archs)(Sources)-externals.$(pack.extension)
 
 deken.sourcepack := \
   $(dist.name)-(Sources)-externals.$(pack.extension)
 
 deken.binpack := \
-  $(dist.name)-$(deken.arch)-externals.$(pack.extension)
+  $(dist.name)-$(deken.archs)-externals.$(pack.extension)
 
 # make deken binary distribution with embedded source package
 deken: dist-install
