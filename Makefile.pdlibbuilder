@@ -735,8 +735,11 @@ MAKEFLAGS += --no-builtin-rules
 .PRECIOUS:
 .SUFFIXES:
 .PHONY: all post build-lib \
-        $(classes) $(makefiledirs) $(makefiles) \
+        $(classes) $(makefiledirs) $(makefiles) $(libs) \
         install install-executables install-datafiles install-datadirs \
+        dist dist-install \
+        deken deken-source deken-source-embed deken-binary-only \
+        deken-recursive deken-umbrella \
         force clean vars allvars depend help
 
 
@@ -1141,8 +1144,7 @@ deken.binpack := \
 
 # make deken binary distribution with embedded source package
 deken: dist-install
-	$(MAKE) deken-source && \
-	cd .. && mv "$(deken.sourcepack)" "$(tmpdir)/$(lib.name)" && \
+	$(MAKE) deken-source-embed && \
 	cd "$(tmpdir)" && \
 	$(pack.tool) $(pack.options) "$(deken.fullpack)" $(lib.name) && \
 	mv "$(deken.fullpack)" ..
@@ -1151,11 +1153,38 @@ deken: dist-install
 deken-source: sourcepack = $(deken.sourcepack)
 deken-source: dist
 
+deken-source-embed: deken-source
+	cd .. && mv "$(deken.sourcepack)" "$(tmpdir)/$(lib.name)"
+
 deken-binary-only: dist-install
 	cd "$(tmpdir)" && \
 	$(pack.tool) $(pack.options) "$(deken.binpack)" $(lib.name) && \
 	mv "$(deken.binpack)" ..
 	@echo "++++ info: lib $(lib.name) packed into ../$(deken.fullpack)"
+
+
+#=== deken meta targets ========================================================
+
+
+# Targets to build multiple libs for deken from a central makefile. Variable
+# 'libs' should list paths of lib source dirs. These paths may differ from lib
+# names. Directories installed in tmpdir are assumed to be libs. Deken meta
+# targets have no option for binary-only distribution.
+
+# make multiple deken packages, each with embedded source
+deken-recursive:
+	$(foreach lib, $(libs), $(MAKE) --directory=$(lib) deken;)
+
+# make single deken package with multiple libraries
+# each lib dir has it's own source package embedded
+deken-umbrella: dist-install
+	$(foreach lib, $(libs), \
+        $(MAKE) --directory=$(lib) deken-source-embed tmpdir=$(tmpdir);)
+	cd "$(tmpdir)" && \
+        $(pack.tool) $(pack.options) "$(deken.fullpack)" `ls -d */` && \
+        mv "$(deken.fullpack)" ..
+	@echo "++++ info: libs in $(lib.name) packed into ../$(deken.fullpack)"
+
 
 #===============================================================================
 
@@ -1200,9 +1229,13 @@ ifeq ($(continue-make),yes)
   continue = || true
 endif
 
-# These targets will trigger sub-make processes for entries in 'makefiledirs'
-# and 'makefiles'.
-all alldebug install clean: $(makefiledirs) $(makefiles)
+# These targets will trigger sub-make processes for entries in 'makefiledirs',
+# 'makefiles' and 'libs'.
+all alldebug install clean: $(makefiledirs) $(makefiles) $(libs)
+
+# this expands to identical rules for each entry in 'makefiledirs'
+$(libs):
+	$(MAKE) --directory=$@ $(MAKECMDGOALS) $(continue)
 
 # this expands to identical rules for each entry in 'makefiledirs'
 $(makefiledirs):
