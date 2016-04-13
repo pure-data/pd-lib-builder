@@ -1168,8 +1168,10 @@ deken-binary-only: dist-install
 
 # Targets to build multiple libs for deken from a central makefile. Variable
 # 'libs' should list paths of lib source dirs. These paths may differ from lib
-# names. Directories installed in tmpdir are assumed to be libs. Deken meta
-# targets have no option for binary-only distribution.
+# names. Directories installed in tmpdir are assumed to be libs. Libs must use
+# Makefile.pdlibbuilder in their build system as the meta targets recursively
+# call other targets from this makefile. Deken meta targets have no option for
+# binary-only distribution.
 
 # make multiple deken packages, each with embedded source
 deken-recursive:
