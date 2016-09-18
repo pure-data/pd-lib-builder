@@ -508,8 +508,6 @@ endif
 #=== flags and paths for Darwin ================================================
 
 
-# On OSX we try to build fat binaries by default. It is assumed that OSX i386
-# can build for ppc and OSX x86_64 can't. TODO: try to refine this condition.
 # LLVM-clang doesn't support -fcheck-new, therefore this flag is omitted for
 # OSX x86_64.
 
@@ -533,13 +531,31 @@ ifeq ($(system), Darwin)
   stripflags = -x
   ifeq ($(machine), i386)
     cxx.flags := -fcheck-new
-    arch.c.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=10.4
-    arch.ld.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=10.4
   endif
-  ifeq ($(machine), x86_64)
-    arch.c.flags := -arch i386 -arch x86_64 -mmacosx-version-min=10.5
-    arch.ld.flags := -arch i386 -arch x86_64 -mmacosx-version-min=10.5
+endif
+
+# Default build targets native architecture only. Optional architecture(s)
+# may be specified in variable 'fat', where 'fat=yes' is interpreted as 
+# 'i386 x86_64' since this is what OSX supports since 10.6.
+
+ifeq ($(system), Darwin)
+  ifeq ($(fat), yes)
+    target.machine := i386 x86_64
+  else
+    target.machine := $(fat)
   endif
+  ifeq ($(findstring i386, $(target.machine)), i386)
+    osxversion := -mmacosx-version-min=10.5
+  endif
+  ifeq ($(findstring ppc, $(target.machine)), ppc)
+    osxversion := -mmacosx-version-min=10.4
+  endif
+  ifeq ($(target.machine),)
+    arch.c.flags :=
+  else
+    arch.c.flags := $(addprefix -arch , $(target.machine)) $(osxversion)
+  endif
+    arch.ld.flags := $(arch.c.flags)
 endif
 
 
@@ -893,10 +909,7 @@ $(foreach v, $(classes), $(eval $(declare-class-executable-target)))
 # incompatible with preprocessor option -MM on OSX <= 10.5. Dependency
 # tracking must be disabled in those cases.
 
-oldfat := $(and $(filter ppc i386, $(machine)), \
-          $(filter-out 0 1, $(words $(filter -arch, $(c.flags)))))
-
-disable-dependency-tracking := $(strip $(pdincludepathwithspaces) $(oldfat))
+disable-dependency-tracking := $(strip $(pdincludepathwithspaces) $(fat))
 
 ifndef disable-dependency-tracking
   must-build-everything := $(filter all, $(goals))
