@@ -534,15 +534,17 @@ ifeq ($(system), Darwin)
   endif
 endif
 
-# Default build targets native architecture only. Optional architecture(s)
-# may be specified in variable 'fat', where 'fat=yes' is interpreted as 
-# 'i386 x86_64' since this is what OSX supports since 10.6.
+# Default build for OSX is native.
+# User variable 'arch' may specify target architecture(s), where 'arch=fat' is
+# interpreted as 'i386 x86_64' since OSX >= 10.6 supports only these out of the
+# box. Users can still build for other architectures if their setup supports it
+# (no checks performed here).
 
 ifeq ($(system), Darwin)
-  ifeq ($(fat), yes)
+  ifeq ($(arch), fat)
     target.machine := i386 x86_64
   else
-    target.machine := $(fat)
+    target.machine := $(arch)
   endif
   ifeq ($(findstring i386, $(target.machine)), i386)
     osxversion := -mmacosx-version-min=10.5
