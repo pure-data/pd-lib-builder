@@ -157,6 +157,12 @@ version = 0.2.6
 #      class.sources += linuxthing.c
 #    endef
 #
+# When building externals on Mac using C++11, you will need to set the minimum
+# OS version:
+#    define forDarwin
+#    	macosx_version_min = 10.9
+#    endef
+#
 # makefiles and makefiledirs: 
 # Extra makefiles or directories with makefiles that should be made in sub-make
 # processes.
@@ -532,12 +538,14 @@ ifeq ($(system), Darwin)
   stripflags = -x
   ifeq ($(machine), i386)
     cxx.flags := -fcheck-new
-    arch.c.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=10.4
-    arch.ld.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=10.4
+    macosx_version_min ?= 10.4
+    arch.c.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=$(macosx_version_min)
+    arch.ld.flags := -arch ppc -arch i386 -arch x86_64 -mmacosx-version-min=$(macosx_version_min)
   endif
   ifeq ($(machine), x86_64)
-    arch.c.flags := -arch i386 -arch x86_64 -mmacosx-version-min=10.5
-    arch.ld.flags := -arch i386 -arch x86_64 -mmacosx-version-min=10.5
+    macosx_version_min ?= 10.5
+    arch.c.flags := -arch i386 -arch x86_64 -mmacosx-version-min=$(macosx_version_min)
+    arch.ld.flags := -arch i386 -arch x86_64 -mmacosx-version-min=$(macosx_version_min)
   endif
 endif
 
