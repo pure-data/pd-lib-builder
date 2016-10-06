@@ -1,4 +1,4 @@
-# Makefile.pdlibbuilder dated 2016-09-30
+# Makefile.pdlibbuilder dated 2016-10-05
 version = 0.2.8
 
 # Helper makefile for Pure Data external libraries.
@@ -226,18 +226,13 @@ version = 0.2.8
 # Executables are built in current working directory. 
 #
 # Variable 'pdincludepath' stores a location where m_pd.h is expected to reside.
-# Locations where Makefile.pdlibbuilder tries to find it, in order of priority:
+# Location where Makefile.pdlibbuilder tries to find it:
 #
-# any OS:   $(externalsdir)../pd/src
+# Linux:    /usr/include/pd
 #
-# Linux:    /usr/include/pdextended
-#           /usr/include/pd
+# OSX:      /Applications/Pd*.app/Contents/Resources/src
 #
-# OSX:      /Applications/Pd-extended.app/Contents/Resources/include/pdextended
-#           /Applications/Pd.app/Contents/Resources/src
-#
-# Windows:  %PROGRAMFILES%/pd/include/pdextended
-#           %PROGRAMFILES%/pd/src
+# Windows:  %PROGRAMFILES%/pd/src
 #
 # The path for installation of all library components is constructed as:
 #
@@ -343,8 +338,7 @@ endif
 
 # Relative path to externals root dir in multi-lib source tree like 
 # pd-extended SVN. Default is parent of current working directory. May be
-# defined differently in including makefile. This variable is used to probe for
-# paths.
+# defined differently in including makefile.
 externalsdir ?= ..
 
 # variable you can use to check if Makefile.pdlibbuilder is already included
@@ -492,10 +486,7 @@ ifeq ($(system), Linux)
   prefix = /usr/local
   libdir := $(prefix)/lib
   pkglibdir = $(libdir)/pd-externals
-  pdincludepath := $(firstword $(wildcard \
-    $(externalsdir)/../pd/src \
-    /usr/include/pdextended \
-    /usr/include/pd))
+  pdincludepath := $(wildcard /usr/include/pd)
   extension = pd_linux
   cpp.flags := -DUNIX
   c.flags := -fpic
@@ -521,8 +512,6 @@ endif
 ifeq ($(system), Darwin)
   pkglibdir = $(HOME)/Library/Pd
   pdincludepath := $(firstword $(wildcard \
-    $(externalsdir)/../pd/src \
-    /Applications/Pd-extended*.app/Contents/Resources/include/pdextended \
     /Applications/Pd*.app/Contents/Resources/src))
   extension = pd_darwin
   cpp.flags := -DUNIX -DMACOSX -I /sw/include
@@ -565,13 +554,8 @@ endif
 # paths for 32-bit executables on 64-bit Windows aren't yet defined here (TODO)
 ifeq ($(system), Windows)
   pkglibdir := $(APPDATA)/Pd
-  pdbinpath := $(wildcard $(externalsdir)/../pd/bin)
-  pdincludepath := $(wildcard $(externalsdir)/../pd/src)
   ifndef pdbinpath
     pdbinpath := $(shell ls -d "$(PROGRAMFILES)/pd/bin")
-  endif
-  ifndef pdincludepath
-    pdincludepath := $(shell ls -d "$(PROGRAMFILES)/pd/include/pdextended")
   endif
   ifndef pdincludepath
     pdincludepath := $(shell ls -d "$(PROGRAMFILES)/pd/src")
@@ -1021,13 +1005,15 @@ install: $(if $(datadirs), install-datadirs)
 
 install-executables: all
 	$(INSTALL_DIR) -v "$(installpath)"
-	$(INSTALL_PROGRAM) $(executables) "$(installpath)"
+	$(foreach v, $(executables), \
+	$(INSTALL_PROGRAM) '$v' "$(installpath)";)
 	$(info ++++ info: executables of lib $(lib.name) installed \
         from $(CURDIR) to $(installpath))
 
 install-datafiles: all
 	$(INSTALL_DIR) -v "$(installpath)"
-	$(INSTALL_DATA) $(datafiles) "$(installpath)"
+	$(foreach v, $(datafiles), \
+	$(INSTALL_DATA) '$(v)' "$(installpath)";)
 	$(info ++++ info: data files of lib $(lib.name) installed \
         from $(CURDIR) to $(installpath))
 
@@ -1170,7 +1156,7 @@ depend:
 ifdef mpdh
   mpdhinfo := $(mpdh)
 else
-  mpdhinfo := m_pd.h was not found. Is Pd(-extended) installed?
+  mpdhinfo := m_pd.h was not found. Is Pd installed?
 endif
 
 help:
