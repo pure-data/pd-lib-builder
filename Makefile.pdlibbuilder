@@ -474,6 +474,10 @@ ifeq ($(uname), Darwin)
   system = Darwin
 endif
 
+ifeq ($(findstring MSYS, $(uname)), MSYS)
+  system = Windows
+endif
+
 ifeq ($(findstring MINGW, $(uname)), MINGW)
   system = Windows
 endif
