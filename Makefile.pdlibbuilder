@@ -641,12 +641,12 @@ endif
 # for pdlibbuilder maintainers: 'c.ldlibs' and 'cxx.ldlibs' must be passed last
 # in the command line for linker, to prevent '-static' affecting other libs.
 ifeq ($(system), Windows)
-  win.std.link := $(if $(filter dynamic, $(win.std.link)), ,static)
+  win.std.link := $(if $(filter static, $(win.std.link)),-static,)
   c.ldflags := -shared -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
-  c.ldlibs := -$(win.std.link) -lgcc -lpthread
+  c.ldlibs := $(win.std.link) -lgcc -lpthread
   cxx.flags := -fcheck-new
   cxx.ldflags := -shared -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
-  cxx.ldlibs := -$(win.std.link) -lgcc -lstdc++ -lpthread
+  cxx.ldlibs := $(win.std.link) -lgcc -lstdc++ -lpthread
   shared.ldflags := -shared "$(PDBINDIR)/pd.dll"
   stripflags = --strip-unneeded -R .note -R .comment
 endif
