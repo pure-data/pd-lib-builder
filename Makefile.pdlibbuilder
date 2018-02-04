@@ -627,17 +627,27 @@ ifeq ($(system), Windows)
   else
     arch.c.flags =
   endif
-  extension = dll
   c.flags :=
-  c.ldflags := -static-libgcc -shared \
-    -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
-  c.ldlibs :=
-  cxx.flags := -fcheck-new
-  cxx.ldflags := -static-libgcc -static-libstdc++ -shared \
-    -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
-  cxx.ldlibs :=
+  extension = dll
   shared.extension = dll
-  shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
+endif
+
+# For Windows, standard libraries are currently linked statically because
+# compatible standard libs may be absent on the end user system. For consistency
+# with other platforms pthread is treated as part of standard libs here. For
+# non-standard libs, linking type remains default (dynamic) if not specified
+# otherwise by the lib makefile. To opt out of statically linked standard libs,
+# define variable 'win.std.link' anything else than 'static'. Important notice
+# for pdlibbuilder maintainers: 'c.ldlibs' and 'cxx.ldlibs' must be passed last
+# in the command line for linker, to prevent '-static' affecting other libs.
+ifeq ($(system), Windows)
+  win.std.link := $(if $(filter dynamic, $(win.std.link)), ,static)
+  c.ldflags := -shared -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
+  c.ldlibs := -$(win.std.link) -lgcc -lpthread
+  cxx.flags := -fcheck-new
+  cxx.ldflags := -shared -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
+  cxx.ldlibs := -$(win.std.link) -lgcc -lstdc++ -lpthread
+  shared.ldflags := -shared "$(PDBINDIR)/pd.dll"
   stripflags = --strip-unneeded -R .note -R .comment
 endif
 
@@ -699,12 +709,12 @@ shared.ldflags := $(shared.ldflags) $(LDFLAGS)
 # accumulated flags for C compiler / linker
 c.flags := $(cpp.flags) $(c.flags) $(cflags) $(CFLAGS)
 c.ldflags := $(c.ldflags) $(ldflags) $(LDFLAGS)
-c.ldlibs := $(c.ldlibs) $(ldlibs)
+c.ldlibs := $(ldlibs) $(c.ldlibs)
 
 # accumulated flags for C++ compiler / linker
 cxx.flags := $(cpp.flags) $(cxx.flags) $(cflags) $(CFLAGS)
 cxx.ldflags := $(cxx.ldflags) $(ldflags) $(LDFLAGS)
-cxx.ldlibs := $(cxx.ldlibs) $(ldlibs)
+cxx.ldlibs := $(ldlibs) $(cxx.ldlibs)
 
 
 ################################################################################
@@ -883,7 +893,7 @@ define link-shared
   $(compile-$1) \
   $(shared.ldflags) \
   -o lib$(lib.name).$(shared.extension) $(shared.objects) \
-  $($1.ldlibs) $(shared.ldlibs)
+  $(shared.ldlibs) $($1.ldlibs)
 endef
 
 # rule for linking objects in shared executable
