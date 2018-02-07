@@ -1,5 +1,5 @@
-# Makefile.pdlibbuilder dated 2016-11-22
-version = 0.4.4
+# Makefile.pdlibbuilder dated 2018-01-23
+version = 0.5.0
 
 # Helper makefile for Pure Data external libraries.
 # Written by Katja Vetter March-June 2015 for the public domain. No warranties.
@@ -100,7 +100,6 @@ version = 0.4.4
 #
 # Deprecated path variables:
 #
-# - PD_PATH
 # - pdincludepath
 # - pdbinpath
 # - objectsdir
@@ -213,10 +212,6 @@ version = 0.4.4
 # INSTALL
 # Definition of install program.
 #
-# PD_PATH:
-# Equivalent to PDDIR. Supported for compatibility with pd-extended central
-# makefile, but deprecated otherwise.
-#
 # objectsdir:
 # Root directory for installation of Pd library directories, like PDLIBDIR but
 # not overridable by environment. Supported for compatibility with pd-extended
@@ -242,7 +237,13 @@ version = 0.4.4
 #
 # OSX:      /Applications/Pd*.app/Contents/Resources/src
 #
-# Windows:  %PROGRAMFILES%/pd/src
+# Windows:  %PROGRAMFILES%/Pd/src
+#           %PROGRAMFILES(X86)%/Pd/src (32 bit builds on 64 bit Windows)
+#
+# Default search path for binary pd.dll (Windows), overridable by PDBINDIR
+#
+#           %PROGRAMFILES%/Pd/bin
+#           %PROGRAMFILES(X86)%/Pd/bin (32 bit builds on 64 bit Windows)
 #
 # Default location to install pd libraries is platform dependent, and
 # overridable by PDLIBDIR:
@@ -321,7 +322,6 @@ version = 0.4.4
 # - decide whether to use -static-libgcc or shared dll in MinGW
 # - cygwin support
 # - android support
-# - Windows 64 bit support
 # - figure out how to handle '$' in filenames
 # - add makefile template targets dpkg-source dist libdir distclean tags?
 #
@@ -425,37 +425,8 @@ endif
 
 
 ################################################################################
-### variables per platform #####################################################
+### platform detection #########################################################
 ################################################################################
-
-
-#=== flags per architecture ====================================================
-
-
-# Set architecture-dependent cflags, mainly for Linux. For Mac and Windows,
-# arch.c.flags are overriden below.
-
-machine := $(shell uname -m)
-
-# Raspberry Pi 1st generation
-ifeq ($(machine), armv6l)
-  arch.c.flags = -march=armv6 -mfpu=vfp -mfloat-abi=hard
-endif
-
-# Beagle, Udoo, RPi2 etc.
-ifeq ($(machine), armv7l)
-  arch.c.flags = -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard
-endif
-
-# Intel 32 bit, build with SSE and SSE2 instructions
-ifeq ($(findstring $(machine), i386 i686), $(machine))
-  arch.c.flags = -march=pentium4 -mfpmath=sse -msse -msse2
-endif
-
-# Intel/AMD 64 bit, build with SSE, SSE2 and SSE3 instructions
-ifeq ($(findstring $(machine), ia64 x86_64), $(machine))
-  arch.c.flags = -march=core2 -mfpmath=sse -msse -msse2 -msse3
-endif
 
 
 #=== operating system ==========================================================
@@ -474,12 +445,16 @@ ifeq ($(uname), Darwin)
   system = Darwin
 endif
 
-ifeq ($(findstring MSYS, $(uname)), MSYS)
+ifeq ($(filter MINGW% MSYS, $(uname)), $(uname)) 
   system = Windows
 endif
 
-ifeq ($(findstring MINGW, $(uname)), MINGW)
-  system = Windows
+# Unfortunately not all Mingw versions provide a link cc > gcc, therefore
+# gcc is hardcoded here (but not if CC is redefined).
+ifeq ($(system), Windows)
+  ifeq ($(origin CC), default)
+    CC = gcc
+  endif
 endif
 
 # evaluate possible system-specific multiline defines from library makefile
@@ -487,6 +462,62 @@ $(eval $(for$(system)))
 
 
 # TODO: Cygwin, Android
+
+
+#=== architecture ==============================================================
+
+
+# native architecture of the build machine
+build.arch := $(shell uname -m)
+
+# Target architecture as reported by compiler. Give precedence to eventual
+# user-defined compiler. The first field of <cpu>-<vendor>-<os> is extracted.
+ifneq ($(origin CXX), default)
+  dumpmachine.cpu = $(firstword $(subst -, ,$(shell $(CXX) -dumpmachine)))
+else
+  dumpmachine.cpu = $(firstword $(subst -, ,$(shell $(CC) -dumpmachine)))
+endif
+
+# Target architecture as reported by compiler is only used for Windows at the
+# moment. For other systems this still has to be tested.
+ifeq ($(system), Windows)
+  target.arch = $(dumpmachine.cpu)
+else
+  target.arch = $(build.arch)
+endif
+
+
+################################################################################
+### variables per platform #####################################################
+################################################################################
+
+
+#=== flags per architecture ====================================================
+
+
+# Set architecture-dependent cflags, mainly for Linux. For Mac and Windows,
+# arch.c.flags are overriden below.
+
+# Raspberry Pi 1st generation
+ifeq ($(target.arch), armv6l)
+  arch.c.flags = -march=armv6 -mfpu=vfp -mfloat-abi=hard
+
+# Beagle, Udoo, RPi2 etc.
+else ifeq ($(target.arch), armv7l)
+  arch.c.flags = -march=armv7-a -mfpu=vfpv3 -mfloat-abi=hard
+
+# Intel 32 bit, build with SSE and SSE2 instructions
+else ifeq ($(findstring $(target.arch), i386 i686), $(target.arch))
+  arch.c.flags = -march=pentium4 -mfpmath=sse -msse -msse2
+  
+# Intel/AMD 64 bit, build with SSE, SSE2 and SSE3 instructions
+else ifeq ($(findstring $(target.arch), x86_64), $(target.arch))
+  arch.c.flags = -march=core2 -mfpmath=sse -msse -msse2 -msse3
+  
+# if none of the above architectures detected
+else
+  arch.c.flags =
+endif
 
 
 #=== flags and paths for Linux =================================================
@@ -537,12 +568,12 @@ ifeq ($(system), Darwin)
     -compatibility_version 1 -current_version 1.0
   stripflags = -x
   version.flag := $(filter $(cflags), -mmacosx-version-min=%)
-  ifeq ($(machine), i386)
+  ifeq ($(target.arch), i386)
     cxx.flags := -fcheck-new
     arch := ppc i386 x86_64
     version.flag ?= -mmacosx-version-min=10.4
   endif
-  ifeq ($(machine), x86_64)
+  ifeq ($(target.arch), x86_64)
     arch := i386 x86_64
     version.flag ?= -mmacosx-version-min=10.5
   endif
@@ -556,41 +587,57 @@ endif
 
 # Standard paths on Windows contain spaces, and GNU make functions treat such
 # paths as lists, with unintended effects. Therefore we must use shell function
-# ls instead of make's wildcard, and probe for each standard path individually.
-# Using double quotes around paths with spaces is obligatory. Since some path
-# variables are assembled or re-expanded later, great care must be taken to put
-# quotes at appropriate points throughout the makefile. Thanks, Bill.
+# ls instead of make's wildcard when probing for a path, and use double quotes
+# when specifying a path in a command argument.
 
-# paths for 32-bit executables on 64-bit Windows aren't yet defined here (TODO)
+# Default paths in Mingw / Mingw-w64 environments. 'PROGRAMFILES' is standard
+# location for builds with native architecture, 'ProgramFiles(x86)' for i686
+# builds on x86_64 Windows (detection method by Lucas Cordiviola). Curly braces
+# required because of parentheses in variable name.
 ifeq ($(system), Windows)
   pkglibdir := $(APPDATA)/Pd
-  ifndef pdbinpath
-    pdbinpath := $(shell ls -d "$(PROGRAMFILES)/pd/bin")
+  ifeq ($(MINGW_CHOST), i686-w64-mingw32)
+    programfiles := ${ProgramFiles(x86)}
+  else
+    programfiles := $(PROGRAMFILES)
   endif
-  ifndef pdincludepath
-    pdincludepath := $(shell ls -d "$(PROGRAMFILES)/pd/src")
-  endif
+  pdbinpath := $(programfiles)/Pd/bin
+  pdincludepath := $(programfiles)/Pd/src
 endif
 
-# On Windows we build 32 bit by default to match Pd(-extended) binary
-# distributions. This may change in the future.
+# Store default path to pd.dll in PDBINDIR if the latter is not user-defined.
+# For include path this is done in the platform-independent paths section below,
+# but for PDBINDIR it is done here so ld flags can be evaluated as immediate
+# variables.
+ifeq ($(system), Windows)
+  ifdef PDDIR
+    PDBINDIR := $(PDDIR)/bin
+  endif
+  PDBINDIR ?= $(pdbinpath)
+endif
+
 # TODO: decide whether -mms-bitfields should be specified.
 ifeq ($(system), Windows)
-  extension = dll
-  CC = gcc
-  CXX = g++
-  arch.c.flags := -march=pentium4 -msse -msse2 -mfpmath=sse
   cpp.flags := -DMSW -DNT
+  ifeq ($(filter i%86 mingw32, $(target.arch)), $(target.arch))
+     arch.c.flags := -march=pentium4 -msse -msse2 -mfpmath=sse
+  else ifeq (x86_64, $(target.arch))
+    cpp.flags := -DMSW -DNT -DPD_LONGINTTYPE=__int64
+    arch.c.flags := -march=core2 -msse -msse2 -msse3 -mfpmath=sse
+  else
+    arch.c.flags =
+  endif
+  extension = dll
   c.flags :=
-  c.ldflags = -static-libgcc -shared \
-    -Wl,--enable-auto-import "$(pdbinpath)/pd.dll"
+  c.ldflags := -static-libgcc -shared \
+    -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
   c.ldlibs :=
   cxx.flags := -fcheck-new
-  cxx.ldflags = -static-libstdc++ -shared \
-    -Wl,--enable-auto-import "$(pdbinpath)/pd.dll"
+  cxx.ldflags := -static-libgcc -static-libstdc++ -shared \
+    -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
   cxx.ldlibs :=
   shared.extension = dll
-  shared.ldflags = -static-libgcc -shared "$(pdbinpath)/pd.dll"
+  shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
   stripflags = --strip-unneeded -R .note -R .comment
 endif
 
@@ -600,17 +647,14 @@ endif
 
 # Platform-dependent default paths are specified above, but overridable.
 # Path variables in upper case can be defined as make command argument or in the
-# environment. 'PD_PATH' and 'objectsdir' are supported for compatibility with
+# environment. Variable 'objectsdir' is supported for compatibility with
 # the build system that pd-l2ork has inherited from pd-extended.
 
-PDDIR ?= $(PD_PATH)
 PDINCLUDEDIR ?= $(pdincludepath)
-PDBINDIR ?= $(pdbinpath)
 PDLIBDIR ?= $(firstword $(objectsdir) $(pkglibdir))
 
-ifneq ($(PDDIR),)
+ifdef PDDIR
   PDINCLUDEDIR := $(wildcard $(PDDIR)/src)
-  PDBINDIR := $(wildcard $(PDDIR)/bin)
 endif
 
 # base path where all components of the lib will be installed by default
@@ -700,6 +744,11 @@ endif
 # store path to Pd API m_pd.h if it is found
 ifdef PDINCLUDEDIR
   mpdh := $(shell ls "$(PDINCLUDEDIR)/m_pd.h")
+endif
+
+# store path to pd.dll; if not found, ls will give a useful error
+ifeq ($(system), Windows)
+  pddll := $(shell ls "$(PDBINDIR)/pd.dll")
 endif
 
 # print Makefile.pdlibbuilder version
