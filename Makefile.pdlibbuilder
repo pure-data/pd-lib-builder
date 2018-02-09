@@ -538,7 +538,7 @@ ifeq ($(system), Linux)
   cxx.ldlibs := -lc -lm -lstdc++
   shared.extension = so
   shared.ldflags := -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
-  stripflags = --strip-unneeded -R .note -R .comment
+  stripflags =
 endif
 
 
@@ -566,7 +566,7 @@ ifeq ($(system), Darwin)
   shared.ldflags = -dynamiclib -undefined dynamic_lookup \
     -install_name @loader_path/$(shared.lib) \
     -compatibility_version 1 -current_version 1.0
-  stripflags = -x
+  stripflags =
   version.flag := $(filter $(cflags), -mmacosx-version-min=%)
   ifeq ($(target.arch), i386)
     cxx.flags := -fcheck-new
@@ -638,7 +638,7 @@ ifeq ($(system), Windows)
   cxx.ldlibs :=
   shared.extension = dll
   shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
-  stripflags = --strip-unneeded -R .note -R .comment
+  stripflags = -s
 endif
 
 
@@ -1056,7 +1056,7 @@ endef
 # -m = set permission mode (as in chmod)
 # -d = create all components of specified directories
 INSTALL = install
-INSTALL_PROGRAM := $(INSTALL) -p -m 644
+INSTALL_PROGRAM := $(INSTALL) $(stripflags) -p -m 644
 INSTALL_DATA := $(INSTALL) -p -m 644
 INSTALL_DIR := $(INSTALL) -m 755 -d
 
