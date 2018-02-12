@@ -538,7 +538,6 @@ ifeq ($(system), Linux)
   cxx.ldlibs := -lc -lm -lstdc++
   shared.extension = so
   shared.ldflags := -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
-  stripflags =
 endif
 
 
@@ -638,7 +637,6 @@ ifeq ($(system), Windows)
   cxx.ldlibs :=
   shared.extension = dll
   shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
-  stripflags = -s
 endif
 
 
@@ -1055,8 +1053,11 @@ endef
 # -p = preserve time stamps
 # -m = set permission mode (as in chmod)
 # -d = create all components of specified directories
+
+# Use recursive expansion for INSTALL_PROGRAM because variable 'stripflags' is
+# not defined yet, it is target-specific for 'install-strip'.
 INSTALL = install
-INSTALL_PROGRAM := $(INSTALL) $(stripflags) -p -m 644
+INSTALL_PROGRAM = $(INSTALL) $(stripflags) -p -m 644
 INSTALL_DATA := $(INSTALL) -p -m 644
 INSTALL_DIR := $(INSTALL) -m 755 -d
 
@@ -1091,6 +1092,14 @@ install-datadirs: all
         $(INSTALL_DATA) $(wildcard $v/*) "$(installpath)/$v";)
 	$(info ++++ info: data directories of lib $(lib.name) installed \
         from $(CURDIR) to $(installpath))
+
+
+# definition of strip command must be overridable from environment
+STRIP ?= strip
+
+# install everything while stripping symbols of executables
+install-strip: stripflags := --strip-program=$(STRIP) -s
+install-strip: install
 
 
 ################################################################################
