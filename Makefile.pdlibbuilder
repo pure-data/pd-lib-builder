@@ -538,7 +538,7 @@ ifeq ($(system), Linux)
   cxx.ldlibs := -lc -lm -lstdc++
   shared.extension = so
   shared.ldflags := -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
-  stripflags = --strip-unneeded -R .note -R .comment
+  stripflags = --strip-unneeded
 endif
 
 
@@ -638,7 +638,7 @@ ifeq ($(system), Windows)
   cxx.ldlibs :=
   shared.extension = dll
   shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
-  stripflags = --strip-unneeded -R .note -R .comment
+  stripflags = --strip-unneeded
 endif
 
 
@@ -1048,9 +1048,33 @@ endef
 ################################################################################
 
 
+#=== strip =====================================================================
+
+
+# Stripping of installed executables is an opt-in, done when user has defined:
+#
+#  'dostrip=yes'
+#
+# while target 'install' is made. This arrangement ensures that stripping is
+# still an option when target 'install' is made through another target (as
+# prerequisite or in a submake). Makefile.pdlibbuilder doesn't currently
+# define post-install targets but a library makefile may do that.
+
+# Make definition of strip command overridable so it can be defined in an
+# environment for cross-compilation.
+STRIP ?= strip
+
+# Commands in 'strip-executables' will be executed conditionally in the rule for
+# target 'install-executables'.
+strip-executables = cd "$(installpath)" && \
+  $(foreach v, $(executables), $(STRIP) $(stripflags) '$v';)
+
+
+#=== install ===================================================================
+
+
 # Install targets depend on successful exit status of target all because nothing
 # must be installed in case of a build error.
-
 
 # -p = preserve time stamps
 # -m = set permission mode (as in chmod)
@@ -1077,6 +1101,7 @@ install-executables: all
 	$(INSTALL_PROGRAM) '$v' "$(installpath)";)
 	$(info ++++ info: executables of lib $(lib.name) installed \
         from $(CURDIR) to $(installpath))
+	$(if $(findstring yes, $(dostrip)), $(strip-executables),)
 
 install-datafiles: all
 	$(INSTALL_DIR) -v "$(installpath)"
