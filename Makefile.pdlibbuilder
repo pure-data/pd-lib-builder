@@ -538,7 +538,7 @@ ifeq ($(system), Linux)
   cxx.ldlibs := -lc -lm -lstdc++
   shared.extension = so
   shared.ldflags := -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
-  stripflags = --strip-unneeded
+  stripflags = -x
 endif
 
 
@@ -638,7 +638,7 @@ ifeq ($(system), Windows)
   cxx.ldlibs :=
   shared.extension = dll
   shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
-  stripflags = --strip-unneeded
+  stripflags =
 endif
 
 
