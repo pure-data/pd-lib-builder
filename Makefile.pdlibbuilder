@@ -570,20 +570,39 @@ ifeq ($(system), Darwin)
   shared.ldflags = -dynamiclib -undefined dynamic_lookup \
     -install_name @loader_path/$(shared.lib) \
     -compatibility_version 1 -current_version 1.0
-  version.flag := $(filter $(cflags), -mmacosx-version-min=%)
-  ifeq ($(target.arch), i386)
+  ifneq ($(filter ppc i386, $(build.arch)),)
     cxx.flags := -fcheck-new
-    arch := ppc i386 x86_64
-    version.flag = -mmacosx-version-min=10.4
   endif
-  ifeq ($(target.arch), x86_64)
-    arch := i386 x86_64
-    version.flag = -mmacosx-version-min=10.5
+endif
+
+
+# Default build for OSX is native.
+# User variable 'arch' may specify target architecture(s), where 'arch=fat' is
+# interpreted as 'i386 x86_64' since OSX >= 10.6 supports only these out of the
+# box. Users can still build for other architectures if their setup supports it
+# (no checks performed here).
+# If a lib makefile has specified minimum OSX version, this will override the
+# default minimum which was set according to target architecture.
+
+ifeq ($(system), Darwin)
+  ifeq ($(arch), fat)
+    target.arch := i386 x86_64
+  else ifneq ($(target.arch),)
+    target.arch := $(arch)
+  else
+    target.arch := $(build.arch)
+  endif
+  ifeq ($(findstring ppc, $(target.arch)), ppc)
+    min.osx.version := -mmacosx-version-min=10.4
+  else ifeq ($(findstring i386, $(target.arch)), i386)
+    min.osx.version := -mmacosx-version-min=10.5
+  else
+    min.osx.version := -mmacosx-version-min=10.6
   endif
   ifneq ($(filter -mmacosx-version-min=%, $(cflags)),)
-    version.flag := $(filter -mmacosx-version-min=%, $(cflags))
+    min.osx.version := $(filter -mmacosx-version-min=%, $(cflags))
   endif
-  arch.c.flags := $(addprefix -arch , $(arch)) $(version.flag)
+  arch.c.flags := $(addprefix -arch , $(target.arch)) $(min.osx.version)
   arch.ld.flags := $(arch.c.flags)
 endif
 
