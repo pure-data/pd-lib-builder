@@ -3,14 +3,13 @@ pd-lib-builder cheatsheet
 
 # Creating special builds
 
-## cross-compiling on linux x86_64 for other platforms
+## building for non-native platform
 
-Using pd-lib-builder >=0.6.0 we can define variable `PLATFORM` to specify a 
-target triplet for cross-compilation. Example to build W32 binaries (assuming 
-package `mingw-w64` is installed and a W32 package for Pd is unzipped into a 
-path `${PDWIN32}`:
+Using pd-lib-builder >=0.6.0 we can define variable `PLATFORM` to specify a
+target triplet for cross-compilation. Assuming a W32 package for Pd is unzipped
+into path `${PDWIN32}`, to build for Windows 32 bit:
 
-    make PLATFORM=x86_64-w64-mingw32 PDDIR="${PDWIN32}"
+    make PLATFORM=i686-w64-mingw32 PDDIR="${PDWIN32}"
 
 #### older pd-lib-builder versions
 
@@ -22,16 +21,18 @@ instead override variables `system`, `target.arch`, `CC` and / or `CXX`,
 
 #### toolchains
 
-Cross toolchains for relevant platforms in Debian Buster (install g++ 
-with dependencies for a given platform to get the whole tool chain):
+To build for non-native OS and/or architecture you need a cross toolchain. On
+Linux such toolchains are relatively easy to get. For example Debian Buster
+amd64 provides them for the following platforms (install g++ with dependencies
+for a given platform to get the whole toolchain):
 
 - `arm-linux-gnueabihf`
 - `aarch64-linux-gnu`
 - `i686-linux-gnu`
 - `i686-w64-mingw32` and `x86_64-w64-mingw32` (install `mingw-w64`)
 
-OSX/MacOS cross tool chains are not distributed by Debian. Use project 
-`osxcross` from Thomas Poechtraeger to create the tools.
+Cross toolchains for OSX/MacOS are not generally distributed. Project
+`osxcross` from Thomas Poechtraeger can create them for Linux.
 
 ## building double-precision externals
 
