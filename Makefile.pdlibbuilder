@@ -360,6 +360,10 @@ ifneq ($(firstword $(sort 3.81 $(MAKE_VERSION))), 3.81)
   $(error GNU make version 3.81 or higher is required)
 endif
 
+# helper variables
+noop=
+space=$(noop) $(noop)
+
 # Relative path to externals root dir in multi-lib source tree like
 # pd-extended SVN. Default is parent of current working directory. May be
 # defined differently in including makefile.
@@ -435,7 +439,7 @@ classes.executables = $(addsuffix .$(extension), $(classes))
 
 # construct shared lib executable name if shared sources are defined
 ifdef shared.sources
-  shared.lib = lib$(lib.name).$(shared.extension)
+  shared.lib = lib$(lib.name).$(subst $(space),-,$(target.triplet)).$(shared.extension)
 else
   shared.lib =
 endif
