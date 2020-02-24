@@ -917,13 +917,13 @@ endif
 define link-shared
   $(compile-$1) \
   $(shared.ldflags) \
-  -o lib$(lib.name).$(shared.extension) $(shared.objects) \
+  -o $(shared.lib) $(shared.objects) \
   $($1.ldlibs) $(shared.ldlibs)
 endef
 
 # rule for linking objects in shared executable
 # build recipe is in macro 'link-shared'
-lib$(lib.name).$(shared.extension): $(shared.objects)
+$(shared.lib): $(shared.objects)
 	$(info ++++ info: linking objects in shared lib $@)
 	$(if $(filter %.cc %.cpp, $(shared.sources)), \
         $(call link-shared,cxx), \
