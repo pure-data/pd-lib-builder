@@ -1,4 +1,4 @@
 #N canvas 335 160 450 300 12;
-#X obj 143 125 test1;
+#X obj 143 125 _template_;
 #X msg 143 93 7;
 #X connect 1 0 0 0;
