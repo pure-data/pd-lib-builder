@@ -1,0 +1,7 @@
+#N canvas 335 160 450 300 12;
+#X msg 143 93 7;
+#X obj 143 125 multipleA;
+#X obj 223 125 multipleB;
+#X msg 223 93 12;
+#X connect 0 0 1 0;
+#X connect 3 0 2 0;
