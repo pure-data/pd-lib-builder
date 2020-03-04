@@ -1,23 +1,12 @@
 # recursively build all example projects in the subdirectories
 
-projects := $(filter-out _%, $(dir $(wildcard */Makefile)))
 
-all: $(projects:%=%-build)
-buildcheck: $(projects:%=%-buildcheck)
-install: $(projects:%=%-install)
-installcheck: $(projects:%=%-installcheck)
-clean: $(projects:%=%-clean)
+makefiledirs := $(filter-out _%, $(dir $(wildcard */Makefile)))
+
+PDLIBBUILDER_DIR = ../
+include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+
+buildcheck installcheck: $(makefiledirs)
 
 projects:
-	@echo $(projects)
-
-%-build: %/Makefile
-	$(MAKE) -C $(<D)
-%-clean: %/Makefile
-	$(MAKE) -C $(<D) clean
-%-install: %/Makefile
-	$(MAKE) -C $(<D) install
-%-buildcheck: %/Makefile %-build
-	$(MAKE) -C $(<D) buildcheck
-%-installcheck: %/Makefile
-	$(MAKE) -C $(<D) installcheck
+	@echo $(makefiledirs)
