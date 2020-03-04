@@ -1,0 +1,9 @@
+#N canvas 966 322 200 200 10;
+#N canvas 19 51 420 300 META 0;
+#X text 10 10 META this is a prototype of a libdir meta file;
+#X text 10 51 AUTHOR IOhannes m zmolnig;
+#X text 10 110 VERSION 1.0.0;
+#X text 10 90 LICENSE CC0;
+#X text 10 70 DESCRIPTION Example "multiple" external.;
+#X text 10 30 NAME multiple;
+#X restore 10 10 pd META;
