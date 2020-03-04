@@ -19,3 +19,12 @@ datafiles = multilib-help.pd multilib-meta.pd
 # include Makefile.pdlibbuilder from submodule directory 'pd-lib-builder'
 PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+
+
+# simplistic tests whether all expected files have been produced/installed
+buildcheck: all
+	test -e multilib.$(extension)
+installcheck: install
+	test -e $(installpath)/multilib.$(extension)
+	test -e $(installpath)/multilib-help.pd
+	test -e $(installpath)/multilib-meta.pd

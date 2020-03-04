@@ -14,3 +14,13 @@ datafiles = multiple-help.pd multiple-meta.pd
 # include Makefile.pdlibbuilder from submodule directory 'pd-lib-builder'
 PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+
+# simplistic tests whether all expected files have been produced/installed
+buildcheck: all
+	test -e multipleA.$(extension)
+	test -e multipleB.$(extension)
+installcheck: install
+	test -e $(installpath)/multipleA.$(extension)
+	test -e $(installpath)/multipleB.$(extension)
+	test -e $(installpath)/multiple-help.pd
+	test -e $(installpath)/multiple-meta.pd
