@@ -14,3 +14,9 @@ datafiles = single-help.pd single-meta.pd
 # include Makefile.pdlibbuilder from submodule directory 'pd-lib-builder'
 PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+
+# simplistic tests whether all expected files have been produced/installed
+buildcheck: all
+	test -e single.$(extension)
+installcheck: install
+	test -e $(installpath)/single.$(extension)
