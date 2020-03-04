@@ -1,4 +1,4 @@
-# Makefile to build class 'helloworld' for Pure Data.
+# Makefile to build class '_template_' for Pure Data.
 # Needs Makefile.pdlibbuilder as helper makefile for platform-dependent build
 # settings and rules.
 
