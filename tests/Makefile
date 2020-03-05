@@ -8,5 +8,8 @@ include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 buildcheck installcheck: $(makefiledirs)
 
+runcheck:
+	PDBINDIR=$(PDBINDIR) ./test-patches.sh $(makefiledirs:%=%/*.pd)
+
 projects:
 	@echo $(makefiledirs)
