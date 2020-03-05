@@ -22,7 +22,9 @@ endef
 # all extra files to be included in binary distribution of the library
 datafiles = multifor-help.pd multifor-meta.pd
 
-# include Makefile.pdlibbuilder from submodule directory 'pd-lib-builder'
+# include Makefile.pdlibbuilder
+# (for real-world projects see the "Project Management" section
+# in tips-tricks.md)
 PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
