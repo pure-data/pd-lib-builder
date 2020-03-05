@@ -16,3 +16,9 @@ datafiles = _template_-help.pd _template_-meta.pd
 # in tips-tricks.md)
 PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+
+# simplistic tests whether all expected files have been produced/installed
+buildcheck: all
+	test -e _template_.$(extension)
+installcheck: install
+	test -e $(installpath)/_template_.$(extension)
