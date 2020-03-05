@@ -14,7 +14,9 @@ class.sources = multisharedA.c multisharedB.c
 # all extra files to be included in binary distribution of the library
 datafiles = multishared-help.pd multishared-meta.pd
 
-# include Makefile.pdlibbuilder from submodule directory 'pd-lib-builder'
+# include Makefile.pdlibbuilder
+# (for real-world projects see the "Project Management" section
+# in tips-tricks.md)
 PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
