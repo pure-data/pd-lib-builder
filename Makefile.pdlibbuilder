@@ -723,9 +723,15 @@ all.objects = $(classes.objects) $(common.objects) $(shared.objects) \
 # construct class executable names from class names
 classes.executables := $(addsuffix .$(extension), $(classes))
 
-# construct shared lib executable name if shared sources are defined
+# Construct shared lib executable name if shared sources are defined. If
+# extension and shared extension are not identical, use both to facilitate co-
+# installation for different platforms, like .m_i386.dll and .m_amd64.dll.
 ifdef shared.sources
-  shared.lib := lib$(lib.name).$(shared.extension)
+  ifeq ($(extension), $(shared.extension))
+    shared.lib = lib$(lib.name).$(shared.extension)
+  else
+    shared.lib = lib$(lib.name).$(extension).$(shared.extension)
+  endif
 else
   shared.lib :=
 endif
@@ -915,13 +921,13 @@ endif
 define link-shared
   $(compile-$1) \
   $(shared.ldflags) \
-  -o lib$(lib.name).$(shared.extension) $(shared.objects) \
+  -o $(shared.lib) $(shared.objects) \
   $($1.ldlibs) $(shared.ldlibs)
 endef
 
 # rule for linking objects in shared executable
 # build recipe is in macro 'link-shared'
-lib$(lib.name).$(shared.extension): $(shared.objects)
+$(shared.lib): $(shared.objects)
 	$(info ++++ info: linking objects in shared lib $@)
 	$(if $(filter %.cc %.cpp, $(shared.sources)), \
         $(call link-shared,cxx), \
