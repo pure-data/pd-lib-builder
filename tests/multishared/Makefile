@@ -22,11 +22,19 @@ include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 # simplistic tests whether all expected files have been produced/installed
 buildcheck: all
+ifeq ($(shared.extension), $(extension))
 	test -e lib$(lib.name).$(shared.extension)
+else
+	test -e lib$(lib.name).$(extension).$(shared.extension)
+endif
 	test -e multisharedA.$(extension)
 	test -e multisharedB.$(extension)
 installcheck: install
+ifeq ($(shared.extension), $(extension))
 	test -e $(installpath)/lib$(lib.name).$(shared.extension)
+else
+	test -e $(installpath)/lib$(lib.name).$(extension).$(shared.extension)
+endif
 	test -e $(installpath)/multisharedA.$(extension)
 	test -e $(installpath)/multisharedB.$(extension)
 	test -e $(installpath)/multishared-help.pd
