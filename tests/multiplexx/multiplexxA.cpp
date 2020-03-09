@@ -17,5 +17,3 @@ void multiplexxA_setup(void) {
   multiplexxA_class = class_new(gensym("multiplexxA"), multiplexxA_new, 0, sizeof(t_object), 0, A_NULL);
   class_addfloat(multiplexxA_class, multiplexxA_float);
 }
-
-
