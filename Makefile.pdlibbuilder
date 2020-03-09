@@ -410,6 +410,9 @@ target.triplet := $(subst -, ,$(shell $(CC) -dumpmachine))
 ifneq ($(filter linux gnu% kfreebsd, $(target.triplet)),)
   system = Linux
 endif
+ifneq ($(filter android%, $(target.triplet)),)
+  system = Android
+endif
 
 ifneq ($(filter darwin%, $(target.triplet)),)
   system = Darwin
@@ -495,6 +498,27 @@ ifeq ($(system), Linux)
   shared.extension = so
   shared.ldflags := -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
 endif
+
+
+#=== flags and paths for Android ===============================================
+ifeq ($(system), Android)
+  prefix = /usr/local
+  libdir := $(prefix)/lib
+  pkglibdir = $(libdir)/pd-externals
+  pdincludepath := $(wildcard /usr/include/pd)
+  extension = so
+  cpp.flags := -DUNIX
+  c.flags :=
+  c.ldflags := -rdynamic -shared -Wl,-rpath,"\$$ORIGIN",--enable-new-dtags
+  c.ldlibs := -lc -lm
+  cxx.flags := -fcheck-new
+  cxx.ldflags := -rdynamic -shared -Wl,-rpath,"\$$ORIGIN",--enable-new-dtags
+  cxx.ldlibs := -lc -lm -lstdc++
+  shared.extension = so
+  shared.ldflags := -rdynamic -shared -Wl,-soname,$(shared.lib)
+endif
+
+
 
 
 #=== flags and paths for Darwin ================================================
@@ -721,7 +745,11 @@ all.objects = $(classes.objects) $(common.objects) $(shared.objects) \
 
 
 # construct class executable names from class names
+ifeq ($(system), Android)
+classes.executables := $(addprefix lib, $(addsuffix .$(extension), $(patsubst %~,%_tilde,$(classes))))
+else
 classes.executables := $(addsuffix .$(extension), $(classes))
+endif
 
 # Construct shared lib executable name if shared sources are defined. If
 # extension and shared extension are not identical, use both to facilitate co-
