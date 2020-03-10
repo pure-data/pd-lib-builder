@@ -21,5 +21,7 @@ include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 # simplistic tests whether all expected files have been produced/installed
 buildcheck: all
 	test -e subdir.$(extension)
+	test -e subdir~.$(extension)
 installcheck: install
 	test -e $(installpath)/subdir.$(extension)
+	test -e $(installpath)/subdir~.$(extension)
