@@ -719,8 +719,29 @@ endef
 
 $(foreach v, $(class.sources), $(eval $(add-class-source)))
 
+# Mangle the names of the classes
+# If a function 'classname-mangler' is defined, it is applied to all output files
+# effectively renaming the filename for the externals
+# This is necessary for building externals for Android, which requires dlopen()ed
+# files to have a specific name.
+# the 'classname-mangler' function takes a single argument (the classname,
+# e.g. 'foo~'), and returns a mangled version (e.g. 'libfoo_tilde').
+# file extensions are handled separately via the 'extension' variable.
+define eval-classname-mangler =
+  $(call classname-mangler,$1).class.sources := $$($(1).class.sources)
+  undefine $(1).class.sources
+  sourcevariables +=  $(call classname-mangler,$1).class.sources
+endef
+
+# only mangle the names if a 'classname-mangler' function is defined
+ifdef classname-mangler
+  sourcevariables :=
+  $(foreach v,  $(filter %.class.sources, $(.VARIABLES)), $(eval $(call eval-classname-mangler,$(basename $(basename $v)))))
+else
+  sourcevariables := $(filter %.class.sources, $(.VARIABLES))
+endif
+
 # derive class names from <classname>.class.sources variables
-sourcevariables := $(filter %.class.sources, $(.VARIABLES))
 classes := $(basename $(basename $(sourcevariables)))
 
 # accumulate all source files specified in makefile
