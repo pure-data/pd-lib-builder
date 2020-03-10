@@ -18,11 +18,14 @@ PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 # simplistic tests whether all expected files have been produced/installed
+ifeq ($(system), Android)
+  classprefix=lib
+endif
 buildcheck: all
-	test -e multiplexxA.$(extension)
-	test -e multiplexxB.$(extension)
+	test -e $(classprefix)multiplexxA.$(extension)
+	test -e $(classprefix)multiplexxB.$(extension)
 installcheck: install
-	test -e $(installpath)/multiplexxA.$(extension)
-	test -e $(installpath)/multiplexxB.$(extension)
+	test -e $(installpath)/$(classprefix)multiplexxA.$(extension)
+	test -e $(installpath)/$(classprefix)multiplexxB.$(extension)
 	test -e $(installpath)/multiplexx-help.pd
 	test -e $(installpath)/multiplexx-meta.pd

@@ -24,9 +24,12 @@ include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 
 # simplistic tests whether all expected files have been produced/installed
+ifeq ($(system), Android)
+  classprefix=lib
+endif
 buildcheck: all
-	test -e multilib.$(extension)
+	test -e $(classprefix)multilib.$(extension)
 installcheck: install
-	test -e $(installpath)/multilib.$(extension)
+	test -e $(installpath)/$(classprefix)multilib.$(extension)
 	test -e $(installpath)/multilib-help.pd
 	test -e $(installpath)/multilib-meta.pd

@@ -18,7 +18,10 @@ PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 # simplistic tests whether all expected files have been produced/installed
+ifeq ($(system), Android)
+  classprefix=lib
+endif
 buildcheck: all
-	test -e single.$(extension)
+	test -e $(classprefix)single.$(extension)
 installcheck: install
-	test -e $(installpath)/single.$(extension)
+	test -e $(installpath)/$(classprefix)single.$(extension)
