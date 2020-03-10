@@ -742,8 +742,11 @@ endef
 ifdef classname-mangler
   sourcevariables :=
   $(foreach v,  $(filter %.class.sources, $(.VARIABLES)), $(eval $(call eval-classname-mangler,$(basename $(basename $v)))))
+  lib.executable = $(call classname-mangler,$(lib.name)).$(extension)
 else
   sourcevariables := $(filter %.class.sources, $(.VARIABLES))
+  classname-mangler = $1
+  lib.executable = $(lib.name).$(extension)
 endif
 
 # derive class names from <classname>.class.sources variables
@@ -868,7 +871,7 @@ $(if $(filter install install-lib, $(goals)), $(info ++++ info: \
 ifeq ($(make-lib-executable),yes)
   $(if $(lib.setup.sources), ,\
     $(error Can not build library blob because lib.setup.sources is undefined))
-  executables := $(lib.name).$(extension)
+  executables := $(lib.executable)
 else
   executables := $(classes.executables) $(shared.lib)
 endif
@@ -941,22 +944,22 @@ endef
 
 
 # build all classes into single executable
-build-lib: $(lib.name).$(extension)
-	$(info ++++ info: library blob $(lib.name).$(extension) completed)
+build-lib: $(lib.executable)
+	$(info ++++ info: library blob $(lib.executable) completed)
 
 # recipe for linking objects in lib executable
 # argument $1 = compiler type (c or cxx)
 define link-lib
   $(compile-$1) \
   $($1.ldflags) $(lib.ldflags) \
-  -o $(lib.name).$(extension) $(all.objects) \
+  -o $(lib.executable) $(all.objects) \
   $($1.ldlibs) $(lib.ldlibs)
 endef
 
 # rule for linking objects in lib executable
 # declared conditionally to avoid name clashes
 ifeq ($(make-lib-executable),yes)
-$(lib.name).$(extension): $(all.objects)
+$(lib.executable): $(all.objects)
 	$(if $(filter %.cc %.cpp, $(all.sources)), \
         $(call link-lib,cxx), \
         $(call link-lib,c))
@@ -1236,7 +1239,7 @@ $(DISTDIR):
 # delete build products from build tree
 clean:
 	rm -f $(all.objects)
-	rm -f $(classes.executables) $(lib.name).$(extension) $(shared.lib)
+	rm -f $(classes.executables) $(lib.executable) $(shared.lib)
 	rm -f *.pre *.lst
 
 # remove distribution directories and tarballs from build tree
