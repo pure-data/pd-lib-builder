@@ -745,11 +745,7 @@ all.objects = $(classes.objects) $(common.objects) $(shared.objects) \
 
 
 # construct class executable names from class names
-ifeq ($(system), Android)
-classes.executables := $(addprefix lib, $(addsuffix .$(extension), $(patsubst %~,%_tilde,$(classes))))
-else
 classes.executables := $(addsuffix .$(extension), $(classes))
-endif
 
 # Construct shared lib executable name if shared sources are defined. If
 # extension and shared extension are not identical, use both to facilitate co-
