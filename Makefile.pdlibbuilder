@@ -516,6 +516,10 @@ ifeq ($(system), Android)
   cxx.ldlibs := -lc -lm -lstdc++
   shared.extension = so
   shared.ldflags := -rdynamic -shared -Wl,-soname,$(shared.lib)
+  # on Android, dlopen()ed files must have the form 'lib<name>.so'.
+  # also, the name must not include a '~', so Pd replaces it with a '_tilde'
+  # when searching for a library.
+  classname-mangler = $(addprefix lib, $(patsubst %~,%_tilde,$1))
 endif
 
 
@@ -727,6 +731,7 @@ $(foreach v, $(class.sources), $(eval $(add-class-source)))
 # the 'classname-mangler' function takes a single argument (the classname,
 # e.g. 'foo~'), and returns a mangled version (e.g. 'libfoo_tilde').
 # file extensions are handled separately via the 'extension' variable.
+# See the 'system==Android' section for an example.
 define eval-classname-mangler =
   $(call classname-mangler,$1).class.sources := $$($(1).class.sources)
   undefine $(1).class.sources
