@@ -496,7 +496,7 @@ ifeq ($(system), Linux)
   cxx.ldflags := -rdynamic -shared -fPIC -Wl,-rpath,"\$$ORIGIN",--enable-new-dtags
   cxx.ldlibs := -lc -lm -lstdc++
   shared.extension = so
-  shared.ldflags := -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
+  shared.ldflags = -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
 endif
 
 
@@ -676,7 +676,7 @@ depcheck.flags := $(cpp.flags) $(cflags)
 LDFLAGS := $(arch.ld.flags)
 
 # now add the same ld flags to shared dynamic lib
-shared.ldflags := $(shared.ldflags) $(LDFLAGS)
+shared.ldflags += $(LDFLAGS)
 
 # accumulated flags for C compiler / linker
 c.flags := $(cpp.flags) $(c.flags) $(cflags) $(CFLAGS)
