@@ -18,11 +18,14 @@ PDLIBBUILDER_DIR=../..
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 # simplistic tests whether all expected files have been produced/installed
+ifeq ($(system), Android)
+  classprefix=lib
+endif
 buildcheck: all
-	test -e multipleA.$(extension)
-	test -e multipleB.$(extension)
+	test -e $(classprefix)multipleA.$(extension)
+	test -e $(classprefix)multipleB.$(extension)
 installcheck: install
-	test -e $(installpath)/multipleA.$(extension)
-	test -e $(installpath)/multipleB.$(extension)
+	test -e $(installpath)/$(classprefix)multipleA.$(extension)
+	test -e $(installpath)/$(classprefix)multipleB.$(extension)
 	test -e $(installpath)/multiple-help.pd
 	test -e $(installpath)/multiple-meta.pd
