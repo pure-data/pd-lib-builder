@@ -859,8 +859,8 @@ all:
 	$(info ++++info: target all in lib $(lib.name) completed)
 
 # build all with -g option turned on for debug symbols
-alldebug: c.flags += -g
-alldebug: cxx.flags += -g
+alldebug: c.flags += -g -O0
+alldebug: cxx.flags += -g -O0
 alldebug: all
 
 
