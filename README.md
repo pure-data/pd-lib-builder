@@ -35,7 +35,8 @@ Makefile.pdlibbuilder at the end of the Makefile. Like so:
 
       datafiles = myclass1-help.pd myclass2-help.pd README.txt LICENSE.txt
 
-      include Makefile.pdlibbuilder
+      PDLIBBUILDER_DIR=.
+      include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 
 For files in class.sources it is assumed that class name == source file
