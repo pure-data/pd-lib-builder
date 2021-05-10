@@ -114,6 +114,16 @@ force 32 & 64 bit Intel:
 
     make extension=d_fat arch="i386 x86_64"
 
+To print the architectures within a build, use the `file` command:
+
+```shell
+% file myexternal.d_fat
+% myexternal.d_fat: Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit bundle x86_64] [arm64:Mach-O 64-bit bundle arm64]
+% myexternal.d_fat (for architecture x86_64):	Mach-O 64-bit bundle x86_64
+% myexternal.d_fat (for architecture arm64):	Mach-O 64-bit bundle arm64
+```
+
+
 ### specific language versions ###
 
 
