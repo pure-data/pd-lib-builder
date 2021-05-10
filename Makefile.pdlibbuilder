@@ -434,6 +434,7 @@ $(eval $(for$(system)))
 # x86_64  Intel 64 bit
 # arm     ARM 32 bit
 # aarch64 ARM 64 bit
+# arm64   Apple ARM 64 bit
 
 target.arch := $(firstword $(target.triplet))
 
@@ -522,8 +523,33 @@ ifeq ($(system), Darwin)
     cxx.flags := -fcheck-new
   endif
   ifeq ($(extension), d_fat)
-    arch := i386 x86_64
+    ifeq ($(origin arch), undefined)
+      # detect macOS version from Xcode toolchain version & deduce archs
+      xcode.ver := $(shell \
+        pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | \
+        grep 'version' | sed 's/[^0-9]*\([0-9]*\).*/\1/')
+      ifeq ($(xcode.ver), undefined)
+        $(warn Could not find Xcode version. Using default d_fat archs.)
+        arch := i386 x86_64
+      else ifeq ($(shell [ $(xcode.ver) -gt 11 ] && echo 1), 1)
+        # Xcode 12+
+        arch := x86_64 arm64
+      else ifeq ($(shell [ $(xcode.ver) -gt 9 ] && echo 1), 1)
+        # Xcode 10 - 11
+        $(error Cannot build d_fat. Xcode version $(xcode.ver) \
+                only allows building for $(target.arch).)
+      else ifeq ($(shell [ $(xcode.ver) -gt 3 ] && echo 1), 1)
+        # Xcode 4 - 9
+        arch := i386 x86_64
+      else ifeq ($(xcode.ver), 3)
+        # Xcode 3
+        arch := ppc i386 x86_64
+      else
+        $(error Cannot build d_fat. Unsupported Xcode version $(xcode.ver).)
+      endif
+    endif
   else
+    # build for current arch only
     arch := $(target.arch)
   endif
   ifneq ($(filter -mmacosx-version-min=%, $(cflags)),)
@@ -798,6 +824,11 @@ ifeq ($(goals), all)
   $(if $(mpdh), \
     $(info ++++ info: using Pd API $(mpdh)), \
     $(warning Where is Pd API m_pd.h? Do 'make help' for info.))
+endif
+
+# confirm mac fat build
+ifeq ($(extension), d_fat)
+  $(info ++++ info: making d_fat for archs $(arch))
 endif
 
 # print target info

@@ -88,6 +88,32 @@ exposed as user variables, although technically all makefile variables can be
 overridden by make command arguments.
 
 
+#### macOS fat libs ####
+
+
+Most versions of macOS can produce "fat libs" with multiple architectures in the
+same binary. Set the `extension` variable to "d_fat" to trigger a fat build:
+
+    make extension=d_fat
+
+Makefile.pdlibbuilder will try to deduce the supported architectures depending
+on the version of Xcode (or it's commandline tools) found:
+
+| Xcode version | macOS version | Architectures   |
+| ------------- | ------------- | --------------- |
+| 3             | 10.6          | ppc i386 x86_64 |
+| 4 - 9         | 10.7 - 10.13  | i386 x86_64     |
+| 10 - 11       | 10.14 - 10.15 | x86_64\*        |
+| 12            | 10.15 - 11+   | x86_64 arm64    |
+
+\***Note: Xcode 10 - 11 only builds for x86_64 and an error will be thrown as
+continuing would not result in a fat lib.**
+
+To override autodetection, set the `arch` variable directly. For example, to
+force 32 & 64 bit Intel:
+
+    make extension=d_fat arch="i386 x86_64"
+
 ### specific language versions ###
 
 
