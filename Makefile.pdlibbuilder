@@ -508,7 +508,7 @@ ifeq ($(system), Darwin)
   pkglibdir = $(HOME)/Library/Pd
   pdincludepath := $(firstword $(wildcard \
     /Applications/Pd*.app/Contents/Resources/src))
-  extension = pd_darwin
+  extension ?= pd_darwin
   cpp.flags := -DUNIX -DMACOSX -I /sw/include
   c.flags :=
   c.ldflags := -undefined suppress -flat_namespace -bundle
