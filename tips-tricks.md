@@ -52,14 +52,43 @@ easily build your externals for this environment with
 
    make CPPFLAGS="-DPD_LONGINTTYPE=__int64" CC=x86_64-w64-mingw32-gcc
 
-
 To build a double-precision external for W64, use something like:
 
    make CPPFLAGS="-DPD_LONGINTTYPE=__int64 -DPD_FLOATSIZE=64" CC=x86_64-w64-mingw32-gcc
 
+#### macOS fat libs ####
 
-## TODO universal binaries on OSX
+Most versions of macOS can produce "fat libs" with multiple architectures in the
+same binary. Set the `make-lib-fat` switch to "yes" to trigger a fat build,
+either in a makefile or on the commandline:
 
+    make make-lib-fat=yes
+
+Makefile.pdlibbuilder will try to deduce the supported architectures depending
+upon the version of Xcode (or it's commandline tools) found:
+
+| Xcode version | macOS version | Architectures   |
+| ------------- | ------------- | --------------- |
+| 3             | 10.6          | ppc i386 x86_64 |
+| 4 - 9         | 10.7 - 10.13  | i386 x86_64     |
+| 10 - 11       | 10.14 - 10.15 | x86_64\*        |
+| 12            | 10.15 - 11+   | x86_64 arm64    |
+
+\***Note: Xcode 10 - 11 only builds for x86_64.**
+
+To override autodetection, set the `arch` variable directly. For example, to
+force 32 & 64 bit Intel:
+
+    make make-lib-fat=yes arch="i386 x86_64"
+
+To print the architectures within a build, use the `file` command:
+
+```shell
+% file myexternal.d_fat
+% myexternal.d_fat: Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit bundle x86_64] [arm64:Mach-O 64-bit bundle arm64]
+% myexternal.d_fat (for architecture x86_64): Mach-O 64-bit bundle x86_64
+% myexternal.d_fat (for architecture arm64):  Mach-O 64-bit bundle arm64
+```
 
 # Project management
 

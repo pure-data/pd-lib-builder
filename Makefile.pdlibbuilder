@@ -79,6 +79,7 @@ version = 0.6.0
 # Variables available for your makefile or make command line:
 #
 # - make-lib-executable
+# - make-lib-fat
 # - suppress-wunused
 #
 # Path variables for make command line or environment:
@@ -173,6 +174,11 @@ version = 0.6.0
 # If your makefile defines 'make-lib-executable=yes' as the library default,
 # this can still be overridden with 'make-lib-executable=no' as command argument
 # to build individual class executables (the Makefile.pdlibbuilder default.)
+#
+# make-lib-fat:
+# When this variable is defined ('yes' or any other value) in your makefile or
+# as a command argument, Makefile.pdlibbuilder with try to build a "fat"
+# multi-arch binary on supporting platforms.
 #
 # suppress-wunused:
 # When this variable is defined ('yes' or any other value), -Wunused-variable,
@@ -508,7 +514,10 @@ ifeq ($(system), Darwin)
   pkglibdir = $(HOME)/Library/Pd
   pdincludepath := $(firstword $(wildcard \
     /Applications/Pd*.app/Contents/Resources/src))
-  extension ?= pd_darwin
+  extension = pd_darwin
+  ifdef ($(make-lib-fat),yes)
+    extension = d_fat
+  endif
   cpp.flags := -DUNIX -DMACOSX -I /sw/include
   c.flags :=
   c.ldflags := -undefined suppress -flat_namespace -bundle
