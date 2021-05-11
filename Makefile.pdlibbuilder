@@ -515,7 +515,7 @@ ifeq ($(system), Darwin)
   pdincludepath := $(firstword $(wildcard \
     /Applications/Pd*.app/Contents/Resources/src))
   extension = pd_darwin
-  ifdef ($(make-lib-fat),yes)
+  ifeq ($(make-lib-fat),yes)
     extension = d_fat
   endif
   cpp.flags := -DUNIX -DMACOSX -I /sw/include
