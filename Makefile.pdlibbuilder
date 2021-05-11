@@ -528,16 +528,12 @@ ifeq ($(system), Darwin)
       xcode.ver := $(shell \
         pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | \
         grep 'version' | sed 's/[^0-9]*\([0-9]*\).*/\1/')
-      ifeq ($(xcode.ver), undefined)
-        $(warn Could not find Xcode version. Using default d_fat archs.)
-        arch := i386 x86_64
-      else ifeq ($(shell [ $(xcode.ver) -gt 11 ] && echo 1), 1)
+      ifeq ($(shell [ $(xcode.ver) -gt 11 ] && echo 1), 1)
         # Xcode 12+
         arch := x86_64 arm64
       else ifeq ($(shell [ $(xcode.ver) -gt 9 ] && echo 1), 1)
         # Xcode 10 - 11
-        $(error Cannot build d_fat. Xcode version $(xcode.ver) \
-                only allows building for $(target.arch).)
+        $(warning Xcode version $(xcode.ver) only builds $(target.arch).)
       else ifeq ($(shell [ $(xcode.ver) -gt 3 ] && echo 1), 1)
         # Xcode 4 - 9
         arch := i386 x86_64
@@ -545,7 +541,9 @@ ifeq ($(system), Darwin)
         # Xcode 3
         arch := ppc i386 x86_64
       else
-        $(error Cannot build d_fat. Unsupported Xcode version $(xcode.ver).)
+        $(warning Unknown or unsupported Xcode version. \
+                  Using $(target.arch) for d_fat.)
+        arch := $(target.arch)
       endif
     endif
   else
