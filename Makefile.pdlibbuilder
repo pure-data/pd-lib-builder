@@ -535,7 +535,7 @@ ifeq ($(system), Darwin)
     ifeq ($(origin arch), undefined)
       # detect macOS version from Xcode toolchain version & deduce archs
       xcode.ver := $(shell \
-        pkgutil --pkg-info=com.apple.pkg.CLTools_Executables &>/dev/null | \
+        pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | \
         grep 'version' | sed 's/[^0-9]*\([0-9]*\).*/\1/' \
       )
       ifeq ($(xcode.ver),)
