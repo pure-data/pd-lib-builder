@@ -536,7 +536,7 @@ ifeq ($(system), Darwin)
       # detect macOS version from Xcode toolchain version & deduce archs
       xcode.ver := $(shell \
         pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | \
-        grep 'version' | sed 's/[^0-9]*\([0-9]*\).*/\1/'
+        grep 'version' | sed 's/[^0-9]*\([0-9]*\).*/\1/' \
       )
       ifeq ($(shell [ $(xcode.ver) -gt 11 ] && echo 1), 1)
         # Xcode 12+
