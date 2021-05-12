@@ -79,7 +79,7 @@ version = 0.6.0
 # Variables available for your makefile or make command line:
 #
 # - make-lib-executable
-# - make-lib-fat
+# - make-multi-arch
 # - suppress-wunused
 #
 # Path variables for make command line or environment:
@@ -175,10 +175,10 @@ version = 0.6.0
 # this can still be overridden with 'make-lib-executable=no' as command argument
 # to build individual class executables (the Makefile.pdlibbuilder default.)
 #
-# make-lib-fat:
-# When this variable is defined ('yes' or any other value) in your makefile or
-# as a command argument, Makefile.pdlibbuilder with try to build a "fat"
-# multi-arch binary on supporting platforms.
+# make-multi-arch:
+# When this variable is defined 'yes' in your makefile or as a command argument,
+# Makefile.pdlibbuilder with try to build a "fat" multiple-architecture binary
+# on supporting platforms.
 #
 # suppress-wunused:
 # When this variable is defined ('yes' or any other value), -Wunused-variable,
@@ -515,7 +515,7 @@ ifeq ($(system), Darwin)
   pdincludepath := $(firstword $(wildcard \
     /Applications/Pd*.app/Contents/Resources/src))
   extension = pd_darwin
-  ifeq ($(make-lib-fat),yes)
+  ifeq ($(make-multi-arch),yes)
     extension = d_fat
   endif
   cpp.flags := -DUNIX -DMACOSX -I /sw/include

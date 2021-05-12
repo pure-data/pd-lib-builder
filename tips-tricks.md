@@ -59,10 +59,10 @@ To build a double-precision external for W64, use something like:
 #### macOS fat libs ####
 
 Most versions of macOS can produce "fat libs" with multiple architectures in the
-same binary. Set the `make-lib-fat` switch to "yes" to trigger a fat build,
+same binary. Set the `make-multi-arch` switch to "yes" to trigger a fat build,
 either in a makefile or on the commandline:
 
-    make make-lib-fat=yes
+    make make-multi-arch=yes
 
 Makefile.pdlibbuilder will try to deduce the supported architectures depending
 upon the version of Xcode (or it's commandline tools) found:
@@ -74,12 +74,7 @@ upon the version of Xcode (or it's commandline tools) found:
 | 10 - 11       | 10.14 - 10.15 | x86_64\*        |
 | 12            | 10.15 - 11+   | x86_64 arm64    |
 
-\***Note: Xcode 10 - 11 only builds for x86_64.**
-
-To override autodetection, set the `arch` variable directly. For example, to
-force 32 & 64 bit Intel:
-
-    make make-lib-fat=yes arch="i386 x86_64"
+\***Note: Xcode 10 - 11 removed 32 bit support and only builds for x86_64.**
 
 To print the architectures within a build, use the `file` command:
 
