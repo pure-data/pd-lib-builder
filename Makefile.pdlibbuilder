@@ -451,7 +451,7 @@ target.arch := $(firstword $(target.triplet))
 # $ gcc -Q --help=target
 
 # ARMv6: Raspberry Pi 1st gen, not detectable from target.arch
-ifeq ($(shell uname), armv6l)
+ifeq ($(shell uname -m), armv6l)
   arch.c.flags = -march=armv6 -mfpu=vfp -mfloat-abi=hard
 
 # ARMv7: Beagle, Udoo, RPi2 etc.
