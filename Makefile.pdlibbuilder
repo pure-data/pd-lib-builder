@@ -785,12 +785,16 @@ endif
 
 # store path to Pd API m_pd.h if it is found
 ifdef PDINCLUDEDIR
-  mpdh := $(shell ls "$(PDINCLUDEDIR)/m_pd.h")
+  ifeq ($(system), Windows)
+    mpdh := $(shell dir "$(PDINCLUDEDIR)/m_pd.h")
+  else
+    mpdh := $(shell ls "$(PDINCLUDEDIR)/m_pd.h")
+  endif
 endif
 
 # store path to pd.dll; if not found, ls will give a useful error
 ifeq ($(system), Windows)
-  pddll := $(shell ls "$(PDBINDIR)/pd.dll")
+  pddll := $(shell dir "$(PDBINDIR)/pd.dll")
 endif
 
 # when making target all, check if m_pd.h is found and print info about it
