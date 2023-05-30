@@ -56,7 +56,32 @@ To build a double-precision external for W64, use something like:
 
     make CPPFLAGS="-DPD_LONGINTTYPE=__int64 -DPD_FLOATSIZE=64" CC=x86_64-w64-mingw32-gcc
 
-## TODO universal binaries on OSX
+## Universal binaries on macOS
+
+The compiler, by default, builds for the native architecture of the build
+machine. To make a "universal" multi-arch build, specify the desired
+archtectures on the command line using the "arch" pd-lib-builder Makefile
+variable.
+
+For example, to build a "fat" external for both 64-bit Intel and Arm (Apple
+Silicon):
+
+    make arch="x86_64 arm64"
+
+If the build is successful, the compiled architectures in the built external can
+be confirmed via the `file` command:
+
+~~~sh
+% file vbap.pd_darwin
+vbap.pd_darwin: Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit bundle x86_64] [arm64:Mach-O 64-bit bundle arm64]
+vbap.pd_darwin (for architecture x86_64):   Mach-O 64-bit bundle x86_64
+vbap.pd_darwin (for architecture arm64):    Mach-O 64-bit bundle arm64
+~~~
+
+Note: The available architectures depend on which macOS version & command line
+tools/Xcode combination the build system has. For example, any newer macOS
+10.15+ will support both x86_64 (Intel 64-bit) and arm64 (Apple Silicon) while
+OSX 10.6 - macOS 10.14 can build for x86_64 and i386 (Intel 32-bit).
 
 # Project management
 
