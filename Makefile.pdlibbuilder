@@ -442,6 +442,14 @@ target.arch := $(firstword $(target.triplet))
 ### variables per platform #####################################################
 ################################################################################
 
+#=== flags per floatsize == ====================================================
+floatsize = 32
+ifneq ($(filter-out 32,$(floatsize)),)
+  floatsize.flags = -DPD_FLOATSIZE=$(floatsize)
+else
+  floatsize.flags =
+endif
+
 
 #=== flags per architecture ====================================================
 
@@ -584,14 +592,14 @@ ifeq ($(system), Windows)
   extension = dll
   c.flags :=
   c.ldflags := -static-libgcc -shared \
-    -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
+    -Wl,--enable-auto-import "$(PDBINDIR)/pd$(filter-out 32,$(floatsize)).dll"
   c.ldlibs :=
   cxx.flags := -fcheck-new
   cxx.ldflags := -static-libgcc -static-libstdc++ -shared \
-    -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
+    -Wl,--enable-auto-import "$(PDBINDIR)/pd$(filter-out 32,$(floatsize)).dll"
   cxx.ldlibs :=
   shared.extension = dll
-  shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
+  shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd$(filter-out 32,$(floatsize)).dll"
   stripflags = --strip-all
 endif
 
@@ -639,7 +647,7 @@ endif
 CFLAGS = $(warn.flags) $(optimization.flags) $(arch.c.flags)
 
 # preprocessor flags
-cpp.flags := -DPD -I "$(PDINCLUDEDIR)" $(cpp.flags) $(CPPFLAGS)
+cpp.flags := -DPD -I "$(PDINCLUDEDIR)" $(floatsize.flags) $(cpp.flags) $(CPPFLAGS)
 
 # flags for dependency checking (cflags from makefile may define -I options)
 depcheck.flags := $(cpp.flags) $(cflags)
@@ -792,7 +800,7 @@ endif
 
 # store path to pd.dll; if not found, ls will give a useful error
 ifeq ($(system), Windows)
-  pddll := $(shell ls "$(PDBINDIR)/pd.dll")
+  pddll := $(shell ls "$(PDBINDIR)/pd$(filter-out 32,$(floatsize)).dll")
 endif
 
 # when making target all, check if m_pd.h is found and print info about it
