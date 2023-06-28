@@ -683,6 +683,7 @@ endif
 ### variables: files ###########################################################
 ################################################################################
 
+object.extension = $(extension).o
 
 #=== sources ===================================================================
 
@@ -709,10 +710,10 @@ all.sources := $(classes.sources) $(lib.setup.sources) \
 
 
 # construct object filenames from all C and C++ source file names
-classes.objects := $(addsuffix .o, $(basename $(classes.sources)))
-common.objects := $(addsuffix .o, $(basename $(common.sources)))
-shared.objects := $(addsuffix .o, $(basename $(shared.sources)))
-lib.setup.objects := $(addsuffix .o, $(basename $(lib.setup.sources)))
+classes.objects := $(addsuffix .$(object.extension), $(basename $(classes.sources)))
+common.objects := $(addsuffix .$(object.extension), $(basename $(common.sources)))
+shared.objects := $(addsuffix .$(object.extension), $(basename $(shared.sources)))
+lib.setup.objects := $(addsuffix .$(object.extension), $(basename $(lib.setup.sources)))
 all.objects = $(classes.objects) $(common.objects) $(shared.objects) \
   $(lib.setup.objects)
 
@@ -723,12 +724,13 @@ all.objects = $(classes.objects) $(common.objects) $(shared.objects) \
 # construct class executable names from class names
 classes.executables := $(addsuffix .$(extension), $(classes))
 
-# Construct shared lib executable name if shared sources are defined. If
-# extension and shared extension are not identical, use both to facilitate co-
-# installation for different platforms, like .m_i386.dll and .m_amd64.dll.
+# Construct shared lib executable name if shared sources are defined.
+# If extension does not end with shared extension, use both to facilitate co-
+# installation for different platforms, like .m_i386.dll and .linux-amd64-32.so
 ifdef shared.sources
-  ifeq ($(extension), $(shared.extension))
-    shared.lib = lib$(lib.name).$(shared.extension)
+  ifneq ($(filter %.$(shared.extension), .$(extension)), )
+    # $(extension) already ends with $(shared.extension), no need to duplicate it
+    shared.lib = lib$(lib.name).$(extension)
   else
     shared.lib = lib$(lib.name).$(extension).$(shared.extension)
   endif
@@ -874,8 +876,8 @@ define link-class
   $(compile-$1) \
   $($1.ldflags) $($2.class.ldflags) \
   -o $2.$(extension) \
-  $(addsuffix .o, $(basename $($2.class.sources))) \
-  $(addsuffix .o, $(basename $(common.sources))) \
+  $(addsuffix .$(object.extension), $(basename $($2.class.sources))) \
+  $(addsuffix .$(object.extension), $(basename $(common.sources))) \
   $($1.ldlibs) $($2.class.ldlibs) $(shared.lib)
 endef
 
@@ -949,13 +951,13 @@ endef
 # Three rules to create .o files. These are double colon 'terminal' rules,
 # meaning they are the last in a rules chain.
 
-%.o:: %.c
+%.$(object.extension):: %.c
 	$(call make-object-file,c)
 
-%.o:: %.cc
+%.$(object.extension):: %.cc
 	$(call make-object-file,cxx)
 
-%.o:: %.cpp
+%.$(object.extension):: %.cpp
 	$(call make-object-file,cxx)
 
 
@@ -974,8 +976,8 @@ endef
 # declare explicit prerequisites rule like 'class.extension: object1.o object2.o'
 # argument $v is class basename
 define declare-class-executable-target
-$v.$(extension): $(addsuffix .o, $(basename $($v.class.sources))) \
-  $(addsuffix .o, $(basename $(common.sources)))
+$v.$(extension): $(addsuffix .$(object.extension), $(basename $($v.class.sources))) \
+  $(addsuffix .$(object.extension), $(basename $(common.sources)))
 endef
 
 # evaluate explicit prerequisite rules for all classes
@@ -1005,7 +1007,7 @@ endif
 # argument $1 is input source file(s)
 # dir is explicitly added because option -MM strips it by default
 define declare-object-target
-$(dir $1)$(filter %.o: %.h, $(shell $(CPP) $(depcheck.flags) -MM $1)) $(MAKEFILE_LIST)
+$(dir $1)$(patsubst %.o:,%.$(object.extension):,$(filter %.o: %.h, $(shell $(CPP) $(depcheck.flags) -MM $1))) $(MAKEFILE_LIST)
 endef
 
 # evaluate implicit prerequisite rules when rebuilding everything
