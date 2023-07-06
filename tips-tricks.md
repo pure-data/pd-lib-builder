@@ -76,7 +76,7 @@ in bits ("64" for double-precision), followed by the system's native extension
 for dynamic libraries (".dll" on Windows, ".so" on macOS/Linux/un*xes).
 As of pd-lib-builder==0.7.0, you have to manually pass this extension:
 
-    make floatsize=64 extension=windows-amd64-64.so
+    make floatsize=64 extension=windows-amd64-64.dll
     make floatsize=64 extension=linux-arm64-64.so
     make floatsize=64 extension=darwin-fat-64.so arch="x86_64 arm64"
 
