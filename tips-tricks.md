@@ -43,19 +43,6 @@ easily build your externals for 64-bit numbers:
 
    make CPPFLAGS="-DPD_FLOATSIZE=64"
 
-## Building externals for W64 (64-bit Windows)
-
-At the time of writing (2018-02) there is no official Pd that supports
-W64 yet.
-However, if you do get hold of an experimental W64 Pd, you can
-easily build your externals for this environment with
-
-    make CPPFLAGS="-DPD_LONGINTTYPE=__int64" CC=x86_64-w64-mingw32-gcc
-
-To build a double-precision external for W64, use something like:
-
-    make CPPFLAGS="-DPD_LONGINTTYPE=__int64 -DPD_FLOATSIZE=64" CC=x86_64-w64-mingw32-gcc
-
 ## Universal binaries on macOS
 
 The compiler, by default, builds for the native architecture of the build
