@@ -34,15 +34,6 @@ for a given platform to get the whole toolchain):
 Cross toolchains for OSX/MacOS are not generally distributed. Project
 `osxcross` from Thomas Poechtraeger can create them for Linux.
 
-## Building double-precision externals
-
-At the time of writing (2018-02) there is no official Pd that supports
-double-precision numbers yet.
-However, if you do get hold of an experimental double-precision Pd, you can
-easily build your externals for 64-bit numbers:
-
-   make CPPFLAGS="-DPD_FLOATSIZE=64"
-
 ## Universal binaries on macOS
 
 The compiler, by default, builds for the native architecture of the build
@@ -69,6 +60,26 @@ Note: The available architectures depend on which macOS version & command line
 tools/Xcode combination the build system has. For example, any newer macOS
 10.15+ will support both x86_64 (Intel 64-bit) and arm64 (Apple Silicon) while
 OSX 10.6 - macOS 10.14 can build for x86_64 and i386 (Intel 32-bit).
+
+## Building double-precision externals
+
+At the time of writing (2023-07-06) there is no official Pd that supports
+double-precision numbers yet.
+However, if you do get hold of an experimental double-precision Pd, you can
+easily build your externals for 64-bit numbers, by passing `floatsize=64`
+as an argument to `make`.
+Starting with Pd>=0.54, double precision externals use different extensions
+from traditional (single-precision) externals.
+The extension consists of the OS ("linux", "darwin", "windows"), the CPU
+architecture ("amd64" (x86_64), "i386" (x86), "arm64",...) and the floatsize
+in bits ("64" for double-precision), followed by the system's native extension
+for dynamic libraries (".dll" on Windows, ".so" on macOS/Linux/un*xes).
+As of pd-lib-builder==0.7.0, you have to manually pass this extension:
+
+    make floatsize=64 extension=windows-amd64-64.so
+    make floatsize=64 extension=linux-arm64-64.so
+    make floatsize=64 extension=darwin-fat-64.so arch="x86_64 arm64"
+
 
 # Project management
 
