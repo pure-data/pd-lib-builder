@@ -531,11 +531,11 @@ ifeq ($(system), Darwin)
   pdincludepath := $(firstword $(wildcard \
     /Applications/Pd*.app/Contents/Resources/src))
   extension = pd_darwin
-  cpp.flags := -DUNIX -DMACOSX -I /sw/include
+  cpp.flags :=  -DUNIX -DMACOSX $(patsubst %,-I%,$(wildcard /sw/include /opt/homebrew/include))
   c.flags :=
-  c.ldflags := -undefined suppress -flat_namespace -bundle
+  c.ldflags := -undefined suppress -flat_namespace -bundle $(patsubst %,-L%,$(wildcard /opt/homebrew/lib))
   c.ldlibs := -lc
-  cxx.ldflags := -undefined suppress -flat_namespace -bundle
+  cxx.ldflags := -undefined suppress -flat_namespace -bundle $(patsubst %,-L%,$(wildcard /opt/homebrew/lib))
   cxx.ldlibs := -lc
   shared.extension = dylib
   shared.ldflags = -dynamiclib -undefined dynamic_lookup \
