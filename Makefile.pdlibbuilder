@@ -425,6 +425,9 @@ target.triplet := $(subst -, ,$(shell $(CC) -dumpmachine))
 ifneq ($(filter linux gnu% kfreebsd, $(target.triplet)),)
   system = Linux
 endif
+ifneq ($(filter android%, $(target.triplet)),)
+  system = Android
+endif
 
 ifneq ($(filter darwin%, $(target.triplet)),)
   system = Darwin
@@ -518,6 +521,31 @@ ifeq ($(system), Linux)
   shared.extension = so
   shared.ldflags = -rdynamic -fPIC -shared -Wl,-soname,$(shared.lib)
 endif
+
+
+#=== flags and paths for Android ===============================================
+ifeq ($(system), Android)
+  prefix = /usr/local
+  libdir := $(prefix)/lib
+  pkglibdir = $(libdir)/pd-externals
+  pdincludepath := $(wildcard /usr/include/pd)
+  extension = so
+  cpp.flags := -DUNIX
+  c.flags :=
+  c.ldflags := -rdynamic -shared -Wl,-rpath,"\$$ORIGIN",--enable-new-dtags
+  c.ldlibs := -lc -lm
+  cxx.flags := -fcheck-new
+  cxx.ldflags := -rdynamic -shared -Wl,-rpath,"\$$ORIGIN",--enable-new-dtags
+  cxx.ldlibs := -lc -lm -lstdc++
+  shared.extension = so
+  shared.ldflags = -rdynamic -shared -Wl,-soname,$(shared.lib)
+  # on Android, dlopen()ed files must have the form 'lib<name>.so'.
+  # also, the name must not include a '~', so Pd replaces it with a '_tilde'
+  # when searching for a library.
+  classname-mangler = $(addprefix lib, $(patsubst %~,%_tilde,$1))
+endif
+
+
 
 
 #=== flags and paths for Darwin ================================================
@@ -719,8 +747,33 @@ endef
 
 $(foreach v, $(class.sources), $(eval $(add-class-source)))
 
+# Mangle the names of the classes
+# If a function 'classname-mangler' is defined, it is applied to all output files
+# effectively renaming the filename for the externals
+# This is necessary for building externals for Android, which requires dlopen()ed
+# files to have a specific name.
+# the 'classname-mangler' function takes a single argument (the classname,
+# e.g. 'foo~'), and returns a mangled version (e.g. 'libfoo_tilde').
+# file extensions are handled separately via the 'extension' variable.
+# See the 'system==Android' section for an example.
+define eval-classname-mangler =
+  $(call classname-mangler,$1).class.sources := $$($(1).class.sources)
+  undefine $(1).class.sources
+  sourcevariables +=  $(call classname-mangler,$1).class.sources
+endef
+
+# only mangle the names if a 'classname-mangler' function is defined
+ifdef classname-mangler
+  sourcevariables :=
+  $(foreach v,  $(filter %.class.sources, $(.VARIABLES)), $(eval $(call eval-classname-mangler,$(basename $(basename $v)))))
+  lib.executable = $(call classname-mangler,$(lib.name)).$(extension)
+else
+  sourcevariables := $(filter %.class.sources, $(.VARIABLES))
+  classname-mangler = $1
+  lib.executable = $(lib.name).$(extension)
+endif
+
 # derive class names from <classname>.class.sources variables
-sourcevariables := $(filter %.class.sources, $(.VARIABLES))
 classes := $(basename $(basename $(sourcevariables)))
 
 # accumulate all source files specified in makefile
@@ -843,7 +896,7 @@ $(if $(filter install install-lib, $(goals)), $(info ++++ info: \
 ifeq ($(make-lib-executable),yes)
   $(if $(lib.setup.sources), ,\
     $(error Can not build library blob because lib.setup.sources is undefined))
-  executables := $(lib.name).$(extension)
+  executables := $(lib.executable)
 else
   executables := $(classes.executables) $(shared.lib)
 endif
@@ -916,22 +969,22 @@ endef
 
 
 # build all classes into single executable
-build-lib: $(lib.name).$(extension)
-	$(info ++++ info: library blob $(lib.name).$(extension) completed)
+build-lib: $(lib.executable)
+	$(info ++++ info: library blob $(lib.executable) completed)
 
 # recipe for linking objects in lib executable
 # argument $1 = compiler type (c or cxx)
 define link-lib
   $(compile-$1) \
   $($1.ldflags) $(lib.ldflags) \
-  -o $(lib.name).$(extension) $(all.objects) \
+  -o $(lib.executable) $(all.objects) \
   $($1.ldlibs) $(lib.ldlibs)
 endef
 
 # rule for linking objects in lib executable
 # declared conditionally to avoid name clashes
 ifeq ($(make-lib-executable),yes)
-$(lib.name).$(extension): $(all.objects)
+$(lib.executable): $(all.objects)
 	$(if $(filter %.cc %.cpp, $(all.sources)), \
         $(call link-lib,cxx), \
         $(call link-lib,c))
@@ -1211,7 +1264,7 @@ $(DISTDIR):
 # delete build products from build tree
 clean:
 	rm -f $(all.objects)
-	rm -f $(classes.executables) $(lib.name).$(extension) $(shared.lib)
+	rm -f $(classes.executables) $(lib.executable) $(shared.lib)
 	rm -f *.pre *.lst
 
 # remove distribution directories and tarballs from build tree
